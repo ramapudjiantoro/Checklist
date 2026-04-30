@@ -39,11 +39,15 @@
   }
 
   #timer {
-    font-size: 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
     color: #c0392b;
     background: #1a1a1a;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   #progress-bar-wrap {
@@ -199,7 +203,8 @@
     border-bottom: 1px solid #2a2a2a;
     color: #f0f0f0;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
+    font-weight: 700;
     padding: 4px 0 6px;
     resize: none;
     outline: none;
@@ -232,7 +237,7 @@
     border-bottom: 1px solid #2a2a2a;
     color: #f0f0f0;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     padding: 4px 0 6px;
     resize: none;
     outline: none;
@@ -533,8 +538,12 @@ function updateTimer() {
   const h = Math.floor(diff / 3_600_000);
   const m = Math.floor((diff % 3_600_000) / 60_000);
   const s = Math.floor((diff % 60_000) / 1000);
-  document.getElementById('timer').textContent =
-    `⌚ ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('timer').innerHTML =
+    `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+      <circle cx="7" cy="7" r="6" stroke="#c0392b" stroke-width="1.5"/>
+      <line x1="7" y1="7" x2="7" y2="3.5" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="7" y1="7" x2="10" y2="8.5" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
   if (diff <= 1000) {
     setTimeout(() => {
