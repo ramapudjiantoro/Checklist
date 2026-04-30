@@ -39,8 +39,8 @@
   }
 
   #timer {
-    font-size: 0.85rem;
-    color: #888;
+    font-size: 1rem;
+    color: #c0392b;
     background: #1a1a1a;
     padding: 4px 10px;
     border-radius: 20px;
@@ -296,7 +296,7 @@
 <body>
 
 <header>
-  <h1>Daily Checklist</h1>
+  <h1>Checklist</h1>
   <div id="timer">--:--:--</div>
 </header>
 
@@ -534,7 +534,7 @@ function updateTimer() {
   const m = Math.floor((diff % 3_600_000) / 60_000);
   const s = Math.floor((diff % 60_000) / 1000);
   document.getElementById('timer').textContent =
-    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    `⌚ ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
   if (diff <= 1000) {
     setTimeout(() => {
