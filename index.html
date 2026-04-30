@@ -125,8 +125,7 @@
     border-radius: 4px;
   }
 
-  .task-actions button:hover { color: #f0f0f0; background: #2a2a2a; }
-  .task-actions .del:hover { color: #e05555; }
+  .task-actions button:hover { color: #e05555; background: #2a2a2a; }
 
   /* Add task row */
   #add-row {
@@ -253,55 +252,6 @@
 
   #export-btn:hover { color: #f0f0f0; border-color: #444; }
 
-  /* Modal */
-  .modal-bg {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    z-index: 50;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .modal-bg.show { display: flex; }
-
-  .modal {
-    background: #1a1a1a;
-    border-radius: 14px;
-    padding: 22px;
-    width: 90%;
-    max-width: 400px;
-  }
-
-  .modal h3 { font-size: 1rem; margin-bottom: 14px; }
-
-  .modal input {
-    width: 100%;
-    background: #111;
-    border: 1px solid #333;
-    color: #f0f0f0;
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    outline: none;
-    margin-bottom: 14px;
-  }
-
-  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
-
-  .modal-btns button {
-    padding: 8px 18px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .btn-confirm { background: #f5a623; color: #000; }
-  .btn-cancel  { background: #2a2a2a; color: #aaa; }
-
   /* Export overlay */
   #export-overlay {
     display: none;
@@ -379,18 +329,6 @@
 </div>
 
 <button id="export-btn">📸 Export Summary</button>
-
-<!-- Edit modal -->
-<div class="modal-bg" id="edit-modal">
-  <div class="modal">
-    <h3>Edit Task</h3>
-    <input type="text" id="edit-input" />
-    <div class="modal-btns">
-      <button class="btn-cancel" id="edit-cancel">Cancel</button>
-      <button class="btn-confirm" id="edit-confirm">Save</button>
-    </div>
-  </div>
-</div>
 
 <!-- Export overlay -->
 <div id="export-overlay">
@@ -507,8 +445,7 @@ function render() {
       <div class="task-label">${escHtml(t.label)}</div>
       <div class="task-streak">${streak > 0 ? '🔥 ' + streak : ''}</div>
       <div class="task-actions">
-        <button class="edit" data-idx="${idx}" title="Edit">✏️</button>
-        <button class="del"  data-idx="${idx}" title="Delete">✕</button>
+        <button class="del" data-idx="${idx}" title="Delete">✕</button>
       </div>
     `;
 
@@ -521,14 +458,6 @@ function render() {
     });
 
     list.appendChild(div);
-  });
-
-  // Edit / delete buttons
-  list.querySelectorAll('.task-actions .edit').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      openEdit(+btn.dataset.idx);
-    });
   });
 
   list.querySelectorAll('.task-actions .del').forEach(btn => {
@@ -562,38 +491,6 @@ function addTask() {
   saveTasks();
   inp.value = '';
   render();
-}
-
-// ── Edit task ─────────────────────────────────────────────────────────────────
-let editIdx = -1;
-
-function openEdit(idx) {
-  editIdx = idx;
-  document.getElementById('edit-input').value = tasks[idx].label;
-  document.getElementById('edit-modal').classList.add('show');
-  document.getElementById('edit-input').focus();
-}
-
-document.getElementById('edit-confirm').onclick = () => {
-  const val = document.getElementById('edit-input').value.trim();
-  if (val && editIdx >= 0) {
-    tasks[editIdx].label = val;
-    saveTasks();
-    render();
-  }
-  closeEdit();
-};
-
-document.getElementById('edit-cancel').onclick = closeEdit;
-
-document.getElementById('edit-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('edit-confirm').click();
-  if (e.key === 'Escape') closeEdit();
-});
-
-function closeEdit() {
-  editIdx = -1;
-  document.getElementById('edit-modal').classList.remove('show');
 }
 
 // ── Delete task ───────────────────────────────────────────────────────────────
