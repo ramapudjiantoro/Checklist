@@ -32,6 +32,12 @@
 
   h1 { font-size: 1.4rem; font-weight: 700; }
 
+  #date-display {
+    font-size: 0.82rem;
+    color: #555;
+    margin-bottom: 10px;
+  }
+
   #timer {
     font-size: 0.85rem;
     color: #888;
@@ -294,6 +300,7 @@
   <div id="timer">--:--:--</div>
 </header>
 
+<div id="date-display"></div>
 <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
 <div id="progress-text"></div>
 
@@ -649,7 +656,18 @@ document.getElementById('close-export').onclick = () => {
   document.getElementById('export-overlay').classList.remove('show');
 };
 
+// ── Date display ──────────────────────────────────────────────────────────────
+function updateDate() {
+  const d = new Date();
+  const day = d.toLocaleDateString('en-GB', { weekday: 'long' });
+  const dd  = String(d.getDate()).padStart(2, '0');
+  const mm  = d.toLocaleDateString('en-GB', { month: 'long' });
+  const yyyy = d.getFullYear();
+  document.getElementById('date-display').textContent = `${day} - ${dd} ${mm} ${yyyy}`;
+}
+
 // ── Start ─────────────────────────────────────────────────────────────────────
+updateDate();
 render();
 setInterval(updateTimer, 1000);
 updateTimer();
