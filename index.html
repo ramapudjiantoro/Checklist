@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Daily Checklist</title>
+<title>Checklist</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon.jpg" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Checklist" />
+<meta name="theme-color" content="#0f0f0f" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -26,12 +32,43 @@
 
   h1 { font-size: 1.4rem; font-weight: 700; }
 
+  #date-display {
+    font-size: 0.82rem;
+    color: #555;
+    margin-bottom: 10px;
+  }
+
+  #timer-wrap {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  /* Sync status dot */
+  #sync-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #333;
+    flex-shrink: 0;
+    transition: background 0.4s;
+    cursor: default;
+  }
+  #sync-dot.syncing { background: #f5a623; animation: blink 1s infinite; }
+  #sync-dot.ok      { background: #27ae60; }
+  #sync-dot.err     { background: #e05555; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
   #timer {
-    font-size: 0.85rem;
-    color: #888;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #c0392b;
     background: #1a1a1a;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   #progress-bar-wrap {
@@ -54,7 +91,6 @@
     margin-bottom: 14px;
   }
 
-  /* Task row */
   .task {
     display: flex;
     align-items: center;
@@ -83,11 +119,7 @@
   .task-check svg { display: none; }
   .task.done .task-check svg { display: block; }
 
-  .task-label {
-    flex: 1;
-    font-size: 0.95rem;
-  }
-
+  .task-label { flex: 1; font-size: 0.95rem; }
   .task.done .task-label { text-decoration: line-through; }
 
   .task-streak {
@@ -96,17 +128,14 @@
     white-space: nowrap;
     margin-right: 2px;
   }
-
   .task.done .task-streak { color: #c47f10; }
 
-  /* Task action buttons — hidden until hover/focus */
   .task-actions {
     display: flex;
     gap: 4px;
     opacity: 0;
     transition: opacity 0.15s;
   }
-
   .task:hover .task-actions { opacity: 1; }
 
   .task-actions button {
@@ -118,11 +147,9 @@
     padding: 2px 5px;
     border-radius: 4px;
   }
-
   .task-actions button:hover { color: #f0f0f0; background: #2a2a2a; }
   .task-actions .del:hover { color: #e05555; }
 
-  /* Add task row */
   #add-row {
     display: flex;
     gap: 8px;
@@ -139,7 +166,6 @@
     font-size: 0.9rem;
     outline: none;
   }
-
   #add-row input:focus { border-color: #444; }
 
   #add-row button {
@@ -153,10 +179,6 @@
     font-size: 0.9rem;
   }
 
-  /* Divider between task groups */
-  .task-divider { height: 14px; }
-
-  /* Goals section */
   #goals-section {
     margin-top: 28px;
     border-top: 1px solid #1e1e1e;
@@ -188,12 +210,14 @@
     border-bottom: 1px solid #2a2a2a;
     color: #f0f0f0;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     padding: 4px 0 6px;
     resize: none;
     outline: none;
     line-height: 1.5;
   }
+
+  #goal-big { font-weight: 700; }
 
   .goal-block textarea::placeholder { color: #333; }
   .goal-block textarea:focus { border-bottom-color: #555; }
@@ -231,7 +255,6 @@
   .supporting-goal textarea::placeholder { color: #333; }
   .supporting-goal textarea:focus { border-bottom-color: #555; }
 
-  /* Export */
   #export-btn {
     display: block;
     width: 100%;
@@ -244,10 +267,9 @@
     border-radius: 10px;
     cursor: pointer;
   }
-
   #export-btn:hover { color: #f0f0f0; border-color: #444; }
 
-  /* Modal */
+  /* Edit modal */
   .modal-bg {
     display: none;
     position: fixed;
@@ -257,7 +279,6 @@
     align-items: center;
     justify-content: center;
   }
-
   .modal-bg.show { display: flex; }
 
   .modal {
@@ -267,7 +288,6 @@
     width: 90%;
     max-width: 400px;
   }
-
   .modal h3 { font-size: 1rem; margin-bottom: 14px; }
 
   .modal input {
@@ -292,7 +312,6 @@
     cursor: pointer;
     font-size: 0.9rem;
   }
-
   .btn-confirm { background: #f5a623; color: #000; }
   .btn-cancel  { background: #2a2a2a; color: #aaa; }
 
@@ -308,25 +327,11 @@
     flex-direction: column;
     gap: 14px;
   }
-
   #export-overlay.show { display: flex; }
-
-  #export-overlay img {
-    max-width: 92vw;
-    max-height: 72vh;
-    border-radius: 10px;
-  }
+  #export-overlay img { max-width: 92vw; max-height: 72vh; border-radius: 10px; }
 
   .export-row { display: flex; gap: 10px; }
-
-  .export-row button {
-    padding: 10px 22px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
+  .export-row button { padding: 10px 22px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
   #download-btn { background: #f5a623; color: #000; }
   #close-export { background: #2a2a2a; color: #aaa; }
 </style>
@@ -334,10 +339,14 @@
 <body>
 
 <header>
-  <h1>Daily Checklist</h1>
-  <div id="timer">--:--:--</div>
+  <h1>Checklist</h1>
+  <div id="timer-wrap">
+    <span id="sync-dot" title="Menghubungkan…"></span>
+    <div id="timer">--:--:--</div>
+  </div>
 </header>
 
+<div id="date-display"></div>
 <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
 <div id="progress-text"></div>
 
@@ -348,15 +357,12 @@
   <button id="add-task-btn">Add</button>
 </div>
 
-<!-- Goals -->
 <div id="goals-section">
   <h2>Today's Goals</h2>
-
   <div class="goal-block">
     <label>1 Big Goal Today (2 hrs)</label>
-    <textarea id="goal-big" rows="2" placeholder="UrgentThing"></textarea>
+    <textarea id="goal-big" rows="1" placeholder="UrgentThing"></textarea>
   </div>
-
   <div class="goal-block">
     <label>2 Supporting Goals (30 min each)</label>
     <div class="supporting-goals">
@@ -395,8 +401,15 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ── Default tasks (first load only) ──────────────────────────────────────────
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const db = supabase.createClient(
+  'https://rtblayoigzzrsjaoomha.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0YmxheW9pZ3p6cnNqYW9vbWhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NjM5ODUsImV4cCI6MjA5MzIzOTk4NX0.XehaJqTGnQXZzzPXmwAhtuklIXy2taZpnOsHEAbkCCA'
+);
+
+// ── Default tasks ─────────────────────────────────────────────────────────────
 const DEFAULT_TASKS = [
   { id: 't1',  label: '🤠 GM - Setup Goals' },
   { id: 't2',  label: '🙏 Istighfar' },
@@ -414,17 +427,25 @@ const DEFAULT_TASKS = [
   { id: 't14', label: '💻 Buka Laptop. Do Something.' },
 ];
 
-const STORAGE_KEY = 'checklist_v2';
-const STREAK_KEY  = 'streaks_v2';
-const TASKS_KEY   = 'tasks_v2';
-const GOALS_KEY   = 'goals_v2';
+const STORAGE_KEY     = 'checklist_v2';
+const STREAK_KEY      = 'streaks_v2';
+const STREAK_DATE_KEY = 'streaks_last_date_v2';
+const TASKS_KEY       = 'tasks_v2';
+const GOALS_KEY       = 'goals_v2';
 
 function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-// ── Tasks list (persisted separately so edits survive resets) ─────────────────
+// ── Sync status dot ───────────────────────────────────────────────────────────
+const syncDot = document.getElementById('sync-dot');
+function setSyncStatus(s) {
+  syncDot.className = s;
+  syncDot.title = s === 'ok' ? 'Tersinkron ✓' : s === 'err' ? 'Offline — data lokal aktif' : 'Menyinkron…';
+}
+
+// ── Local load helpers ────────────────────────────────────────────────────────
 function loadTasks() {
   try {
     const t = JSON.parse(localStorage.getItem(TASKS_KEY));
@@ -432,38 +453,22 @@ function loadTasks() {
   } catch { return DEFAULT_TASKS.slice(); }
 }
 
-function saveTasks() { localStorage.setItem(TASKS_KEY, JSON.stringify(tasks)); }
-
-// ── Daily state ───────────────────────────────────────────────────────────────
 function loadState() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     if (raw.date !== todayStr()) {
-      if (raw.date && raw.checked) updateStreaks(raw.checked);
+      if (raw.date && raw.checked) updateStreaks(raw.checked, raw.date);
       return { date: todayStr(), checked: {} };
     }
     return raw;
   } catch { return { date: todayStr(), checked: {} }; }
 }
 
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-
-// ── Streaks ───────────────────────────────────────────────────────────────────
 function loadStreaks() {
   try { return JSON.parse(localStorage.getItem(STREAK_KEY) || '{}'); }
   catch { return {}; }
 }
 
-function updateStreaks(checkedMap) {
-  const s = loadStreaks();
-  tasks.forEach(t => {
-    s[t.id] = checkedMap[t.id] ? (s[t.id] || 0) + 1 : 0;
-  });
-  localStorage.setItem(STREAK_KEY, JSON.stringify(s));
-  streaks = s;
-}
-
-// ── Goals ─────────────────────────────────────────────────────────────────────
 function loadGoals() {
   try {
     const g = JSON.parse(localStorage.getItem(GOALS_KEY) || '{}');
@@ -472,9 +477,128 @@ function loadGoals() {
   } catch { return { date: todayStr(), big: '', s1: '', s2: '' }; }
 }
 
-function saveGoals() { localStorage.setItem(GOALS_KEY, JSON.stringify(goals)); }
+// ── Save local + push to Supabase ─────────────────────────────────────────────
+function saveTasks()  { localStorage.setItem(TASKS_KEY,   JSON.stringify(tasks));   dbPushTasks(); }
+function saveState()  { localStorage.setItem(STORAGE_KEY, JSON.stringify(state));   dbPushState(); }
+function saveGoals()  { localStorage.setItem(GOALS_KEY,   JSON.stringify(goals));   dbPushGoals(); }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+function updateStreaks(checkedMap, forDate) {
+  const lastDate = localStorage.getItem(STREAK_DATE_KEY);
+  if (lastDate === forDate) return; // guard: prevent double-increment
+  const s = loadStreaks();
+  tasks.forEach(t => {
+    s[t.id] = checkedMap[t.id] ? (s[t.id] || 0) + 1 : 0;
+  });
+  localStorage.setItem(STREAK_KEY, JSON.stringify(s));
+  localStorage.setItem(STREAK_DATE_KEY, forDate);
+  streaks = s;
+  dbPushStreaks();
+}
+
+// ── Supabase push (fire-and-forget) ──────────────────────────────────────────
+async function dbPushTasks() {
+  try {
+    const rows     = tasks.map((t, i) => ({ id: t.id, label: t.label, position: i }));
+    const localIds = tasks.map(t => t.id);
+    const { data: remote } = await db.from('tasks').select('id');
+    const toDelete = (remote || []).map(r => r.id).filter(id => !localIds.includes(id));
+    if (toDelete.length) await db.from('tasks').delete().in('id', toDelete);
+    if (rows.length)     await db.from('tasks').upsert(rows, { onConflict: 'id' });
+  } catch (e) { console.warn('dbPushTasks:', e); }
+}
+
+async function dbPushState() {
+  try {
+    await db.from('daily_state').upsert(
+      { date: state.date, checked: state.checked },
+      { onConflict: 'date' }
+    );
+  } catch (e) { console.warn('dbPushState:', e); }
+}
+
+async function dbPushStreaks() {
+  try {
+    const rows = Object.entries(streaks).map(([task_id, count]) => ({ task_id, count }));
+    if (rows.length) await db.from('streaks').upsert(rows, { onConflict: 'task_id' });
+  } catch (e) { console.warn('dbPushStreaks:', e); }
+}
+
+async function dbPushGoals() {
+  try {
+    await db.from('daily_goals').upsert(
+      { date: goals.date, big: goals.big, s1: goals.s1, s2: goals.s2 },
+      { onConflict: 'date' }
+    );
+  } catch (e) { console.warn('dbPushGoals:', e); }
+}
+
+// ── Supabase initial sync (pull on open) ──────────────────────────────────────
+async function syncFromSupabase() {
+  setSyncStatus('syncing');
+  try {
+    const today = todayStr();
+
+    const [tasksRes, stateRes, streaksRes, goalsRes] = await Promise.all([
+      db.from('tasks').select('*').order('position'),
+      db.from('daily_state').select('*').order('date', { ascending: false }).limit(2),
+      db.from('streaks').select('*'),
+      db.from('daily_goals').select('*').eq('date', today).maybeSingle(),
+    ]);
+
+    // Tasks: remote wins; push local defaults if Supabase is empty
+    if (tasksRes.data?.length) {
+      tasks = tasksRes.data.map(t => ({ id: t.id, label: t.label }));
+      localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+    } else {
+      await dbPushTasks();
+    }
+
+    // Daily state + cross-device day rollover
+    const states     = stateRes.data || [];
+    const todayState = states.find(s => s.date === today);
+    const prevState  = states.find(s => s.date !== today);
+
+    if (todayState) {
+      state = { date: todayState.date, checked: todayState.checked };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } else if (prevState) {
+      // Day changed since last use — roll over streaks then start fresh
+      updateStreaks(prevState.checked, prevState.date);
+      state = { date: today, checked: {} };
+      saveState();
+    } else {
+      await dbPushState();
+    }
+
+    // Streaks: use remote counts
+    if (streaksRes.data?.length) {
+      streaks = {};
+      streaksRes.data.forEach(r => { streaks[r.task_id] = r.count; });
+      localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
+    } else {
+      await dbPushStreaks();
+    }
+
+    // Goals
+    if (goalsRes.data) {
+      goals = { date: goalsRes.data.date, big: goalsRes.data.big, s1: goalsRes.data.s1, s2: goalsRes.data.s2 };
+      localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+      goalBig.value = goals.big;
+      goalS1.value  = goals.s1;
+      goalS2.value  = goals.s2;
+    } else {
+      await dbPushGoals();
+    }
+
+    setSyncStatus('ok');
+    render();
+  } catch (err) {
+    console.warn('Supabase sync failed — using local data:', err);
+    setSyncStatus('err');
+  }
+}
+
+// ── Init (local-first → then sync) ───────────────────────────────────────────
 let tasks   = loadTasks();
 let state   = loadState();
 let streaks = loadStreaks();
@@ -506,7 +630,6 @@ function render() {
       </div>
     `;
 
-    // Toggle on row click (but not action buttons)
     div.addEventListener('click', e => {
       if (e.target.closest('.task-actions')) return;
       state.checked[t.id] = !state.checked[t.id];
@@ -517,19 +640,11 @@ function render() {
     list.appendChild(div);
   });
 
-  // Edit / delete buttons
   list.querySelectorAll('.task-actions .edit').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      openEdit(+btn.dataset.idx);
-    });
+    btn.addEventListener('click', e => { e.stopPropagation(); openEdit(+btn.dataset.idx); });
   });
-
   list.querySelectorAll('.task-actions .del').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      deleteTask(+btn.dataset.idx);
-    });
+    btn.addEventListener('click', e => { e.stopPropagation(); deleteTask(+btn.dataset.idx); });
   });
 
   const done = tasks.filter(t => !!state.checked[t.id]).length;
@@ -542,7 +657,7 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Add task ──────────────────────────────────────────────────────────────────
+// ── Add / Edit / Delete task ──────────────────────────────────────────────────
 document.getElementById('add-task-btn').onclick = addTask;
 document.getElementById('new-task-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') addTask();
@@ -558,7 +673,6 @@ function addTask() {
   render();
 }
 
-// ── Edit task ─────────────────────────────────────────────────────────────────
 let editIdx = -1;
 
 function openEdit(idx) {
@@ -570,16 +684,10 @@ function openEdit(idx) {
 
 document.getElementById('edit-confirm').onclick = () => {
   const val = document.getElementById('edit-input').value.trim();
-  if (val && editIdx >= 0) {
-    tasks[editIdx].label = val;
-    saveTasks();
-    render();
-  }
+  if (val && editIdx >= 0) { tasks[editIdx].label = val; saveTasks(); render(); }
   closeEdit();
 };
-
 document.getElementById('edit-cancel').onclick = closeEdit;
-
 document.getElementById('edit-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('edit-confirm').click();
   if (e.key === 'Escape') closeEdit();
@@ -590,7 +698,6 @@ function closeEdit() {
   document.getElementById('edit-modal').classList.remove('show');
 }
 
-// ── Delete task ───────────────────────────────────────────────────────────────
 function deleteTask(idx) {
   tasks.splice(idx, 1);
   saveTasks();
@@ -623,20 +730,34 @@ function updateTimer() {
   const h = Math.floor(diff / 3_600_000);
   const m = Math.floor((diff % 3_600_000) / 60_000);
   const s = Math.floor((diff % 60_000) / 1000);
-  document.getElementById('timer').textContent =
-    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('timer').innerHTML =
+    `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0">
+      <circle cx="7" cy="7" r="6" stroke="#c0392b" stroke-width="1.5"/>
+      <line x1="7" y1="7" x2="7" y2="3.5" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="7" y1="7" x2="10" y2="8.5" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
   if (diff <= 1000) {
     setTimeout(() => {
-      updateStreaks(state.checked);
+      updateStreaks(state.checked, state.date);
       state = { date: todayStr(), checked: {} };
       saveState();
       goals = { date: todayStr(), big: '', s1: '', s2: '' };
       saveGoals();
       goalBig.value = goalS1.value = goalS2.value = '';
+      updateDate();
       render();
     }, 1100);
   }
+}
+
+// ── Date display ──────────────────────────────────────────────────────────────
+function updateDate() {
+  const d   = new Date();
+  const day = d.toLocaleDateString('en-GB', { weekday: 'long' });
+  const dd  = String(d.getDate()).padStart(2, '0');
+  const mm  = d.toLocaleDateString('en-GB', { month: 'long' });
+  document.getElementById('date-display').textContent = `${day} - ${dd} ${mm} ${d.getFullYear()}`;
 }
 
 // ── Export ────────────────────────────────────────────────────────────────────
@@ -653,28 +774,24 @@ function exportSummary() {
 
   ctx.fillStyle = '#0f0f0f'; ctx.fillRect(0, 0, W, H);
 
-  // Title
   ctx.fillStyle = '#f0f0f0';
   ctx.font = 'bold 20px Segoe UI, system-ui, sans-serif';
-  ctx.fillText('Daily Checklist', PAD, PAD + 22);
+  ctx.fillText('Checklist', PAD, PAD + 22);
   ctx.fillStyle = '#555';
   ctx.font = '13px Segoe UI, system-ui, sans-serif';
   ctx.fillText(now.toDateString(), PAD, PAD + 42);
 
-  // Progress
   const done = tasks.filter(t => !!state.checked[t.id]).length;
   ctx.fillStyle = '#f0f0f0';
   ctx.font = '14px Segoe UI, system-ui, sans-serif';
   ctx.fillText(`${done} / ${tasks.length} completed`, PAD, PAD + 65);
 
-  // Bar
   const barY = PAD + 72;
   ctx.fillStyle = '#222'; ctx.beginPath(); ctx.roundRect(PAD, barY, W-PAD*2, 6, 3); ctx.fill();
   if (done > 0) {
     ctx.fillStyle = '#f5a623'; ctx.beginPath(); ctx.roundRect(PAD, barY, (W-PAD*2)*done/tasks.length, 6, 3); ctx.fill();
   }
 
-  // Tasks
   tasks.forEach((t, i) => {
     const checked = !!state.checked[t.id];
     const streak  = streaks[t.id] || 0;
@@ -703,18 +820,15 @@ function exportSummary() {
       ctx.fillStyle = '#c47f10';
       ctx.font = '12px Segoe UI, system-ui, sans-serif';
       const st = `🔥 ${streak}`;
-      const tw2 = ctx.measureText(st).width;
-      ctx.fillText(st, W - PAD - tw2, y + 18);
+      ctx.fillText(st, W - PAD - ctx.measureText(st).width, y + 18);
     }
   });
 
-  // Goals
   const gy = PAD + 88 + tasks.length * ROW + 14;
   ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(PAD, gy); ctx.lineTo(W-PAD, gy); ctx.stroke();
 
-  ctx.fillStyle = '#555';
-  ctx.font = '11px Segoe UI, system-ui, sans-serif';
+  ctx.fillStyle = '#555'; ctx.font = '11px Segoe UI, system-ui, sans-serif';
   ctx.fillText("TODAY'S GOALS", PAD, gy + 18);
 
   ctx.fillStyle = '#888'; ctx.font = '12px Segoe UI, system-ui, sans-serif';
@@ -729,7 +843,7 @@ function exportSummary() {
   ctx.fillText(`2. ${goals.s2 || '—'}`, PAD + 10, gy + 104);
 
   ctx.fillStyle = '#2a2a2a'; ctx.font = '11px Segoe UI, system-ui, sans-serif';
-  ctx.fillText(`${now.toLocaleTimeString()}`, W - PAD - ctx.measureText(now.toLocaleTimeString()).width, H - 10);
+  ctx.fillText(now.toLocaleTimeString(), W - PAD - ctx.measureText(now.toLocaleTimeString()).width, H - 10);
 
   const url = canvas.toDataURL('image/png');
   document.getElementById('export-img').src = url;
@@ -747,9 +861,11 @@ document.getElementById('close-export').onclick = () => {
 };
 
 // ── Start ─────────────────────────────────────────────────────────────────────
+updateDate();
 render();
 setInterval(updateTimer, 1000);
 updateTimer();
+syncFromSupabase();
 </script>
 </body>
 </html>
