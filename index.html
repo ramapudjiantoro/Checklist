@@ -38,27 +38,6 @@
     margin-bottom: 10px;
   }
 
-  #timer-wrap {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  /* Sync status dot */
-  #sync-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #333;
-    flex-shrink: 0;
-    transition: background 0.4s;
-    cursor: default;
-  }
-  #sync-dot.syncing { background: #f5a623; animation: blink 1s infinite; }
-  #sync-dot.ok      { background: #27ae60; }
-  #sync-dot.err     { background: #e05555; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
   #timer {
     font-size: 1.2rem;
     font-weight: 600;
@@ -86,6 +65,8 @@
   }
 
   #progress-text {
+    display: flex;
+    justify-content: space-between;
     font-size: 0.78rem;
     color: #555;
     margin-bottom: 14px;
@@ -123,10 +104,11 @@
   .task.done .task-label { text-decoration: line-through; }
 
   .task-streak {
-    font-size: 0.75rem;
-    color: #555;
+    font-size: 0.7rem;
+    color: #444;
     white-space: nowrap;
     margin-right: 2px;
+    letter-spacing: 0.01em;
   }
   .task.done .task-streak { color: #c47f10; }
 
@@ -340,10 +322,7 @@
 
 <header>
   <h1>Checklist</h1>
-  <div id="timer-wrap">
-    <span id="sync-dot" title="Menghubungkan…"></span>
-    <div id="timer">--:--:--</div>
-  </div>
+  <div id="timer">--:--:--</div>
 </header>
 
 <div id="date-display"></div>
@@ -438,13 +417,6 @@ function todayStr() {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-// ── Sync status dot ───────────────────────────────────────────────────────────
-const syncDot = document.getElementById('sync-dot');
-function setSyncStatus(s) {
-  syncDot.className = s;
-  syncDot.title = s === 'ok' ? 'Tersinkron ✓' : s === 'err' ? 'Offline — data lokal aktif' : 'Menyinkron…';
-}
-
 // ── Local load helpers ────────────────────────────────────────────────────────
 function loadTasks() {
   try {
@@ -534,7 +506,6 @@ async function dbPushGoals() {
 
 // ── Supabase initial sync (pull on open) ──────────────────────────────────────
 async function syncFromSupabase() {
-  setSyncStatus('syncing');
   try {
     const today = todayStr();
 
@@ -590,11 +561,9 @@ async function syncFromSupabase() {
       await dbPushGoals();
     }
 
-    setSyncStatus('ok');
     render();
   } catch (err) {
     console.warn('Supabase sync failed — using local data:', err);
-    setSyncStatus('err');
   }
 }
 
@@ -623,7 +592,7 @@ function render() {
         </svg>
       </div>
       <div class="task-label">${escHtml(t.label)}</div>
-      <div class="task-streak">${streak > 0 ? '🔥 ' + streak : ''}</div>
+      <div class="task-streak">${streak > 0 ? 'Day ' + streak + ' 🔥' : ''}</div>
       <div class="task-actions">
         <button class="edit" data-idx="${idx}" title="Edit">✏️</button>
         <button class="del"  data-idx="${idx}" title="Delete">✕</button>
@@ -650,7 +619,8 @@ function render() {
   const done = tasks.filter(t => !!state.checked[t.id]).length;
   const pct  = tasks.length ? Math.round(done / tasks.length * 100) : 0;
   document.getElementById('progress-bar').style.width = pct + '%';
-  document.getElementById('progress-text').textContent = `${done} / ${tasks.length} done`;
+  document.getElementById('progress-text').innerHTML =
+    `<span>${done} / ${tasks.length} done</span><span>${pct}%</span>`;
 }
 
 function escHtml(s) {
@@ -819,7 +789,7 @@ function exportSummary() {
     if (streak > 0) {
       ctx.fillStyle = '#c47f10';
       ctx.font = '12px Segoe UI, system-ui, sans-serif';
-      const st = `🔥 ${streak}`;
+      const st = `Day ${streak} 🔥`;
       ctx.fillText(st, W - PAD - ctx.measureText(st).width, y + 18);
     }
   });
