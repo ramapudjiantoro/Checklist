@@ -1,5 +1,5 @@
 {
-  "name": "Daily Checklist",
+  "name": "Checklist",
   "short_name": "Checklist",
   "start_url": "./index.html",
   "display": "standalone",
