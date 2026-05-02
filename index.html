@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Checklist</title>
 <link rel="manifest" href="manifest.json" />
-<link rel="icon" href="icon.jpg" type="image/jpeg" id="favicon-link" />
-<link rel="apple-touch-icon" href="icon.jpg" />
+<link rel="icon" type="image/png" sizes="32x32" href="icon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="icon.png" />
+<link rel="apple-touch-icon" href="icon.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Checklist" />
@@ -389,19 +390,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Convert JPEG favicon to PNG for better bookmark support
-(function() {
-  var img = new Image();
-  img.onload = function() {
-    var c = document.createElement('canvas');
-    c.width = c.height = 64;
-    c.getContext('2d').drawImage(img, 0, 0, 64, 64);
-    var link = document.getElementById('favicon-link');
-    if (link) { link.href = c.toDataURL('image/png'); link.type = 'image/png'; }
-  };
-  img.src = 'icon.jpg';
-})();
-
 // ── Supabase ──────────────────────────────────────────────────────────────────
 const db = supabase.createClient(
   'https://rtblayoigzzrsjaoomha.supabase.co',
