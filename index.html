@@ -462,15 +462,15 @@ function saveTasks()  { localStorage.setItem(TASKS_KEY,   JSON.stringify(tasks))
 function saveState()  { localStorage.setItem(STORAGE_KEY, JSON.stringify(state));   dbPushState(); }
 function saveGoals()  { localStorage.setItem(GOALS_KEY,   JSON.stringify(goals));   dbPushGoals(); }
 
-function updateStreaks(checkedMap, forDate) {
-  const lastDate = localStorage.getItem(STREAK_DATE_KEY);
-  if (lastDate === forDate) return; // guard: prevent double-increment
+function updateStreaks(checkedMap) {
+  const today = todayStr();
+  if (localStorage.getItem(STREAK_DATE_KEY) === today) return;
   const s = loadStreaks();
   tasks.forEach(t => {
     s[t.id] = checkedMap[t.id] ? (s[t.id] || 0) + 1 : 0;
   });
   localStorage.setItem(STREAK_KEY, JSON.stringify(s));
-  localStorage.setItem(STREAK_DATE_KEY, forDate);
+  localStorage.setItem(STREAK_DATE_KEY, today);
   streaks = s;
   dbPushStreaks();
 }
@@ -519,7 +519,7 @@ async function syncFromSupabase() {
 
     const [tasksRes, stateRes, streaksRes, goalsRes] = await Promise.all([
       db.from('tasks').select('*').order('position'),
-      db.from('daily_state').select('*').order('date', { ascending: false }).limit(2),
+      db.from('daily_state').select('*').order('date', { ascending: false }).limit(7),
       db.from('streaks').select('*'),
       db.from('daily_goals').select('*').eq('date', today).maybeSingle(),
     ]);
@@ -532,30 +532,47 @@ async function syncFromSupabase() {
       await dbPushTasks();
     }
 
-    // Daily state + cross-device day rollover
-    const states     = stateRes.data || [];
-    const todayState = states.find(s => s.date === today);
-    const prevState  = states.find(s => s.date !== today);
-
-    if (todayState) {
-      state = { date: todayState.date, checked: todayState.checked };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } else if (prevState) {
-      // Day changed since last use — roll over streaks then start fresh
-      updateStreaks(prevState.checked, prevState.date);
-      state = { date: today, checked: {} };
-      saveState();
-    } else {
-      await dbPushState();
-    }
-
-    // Streaks: use remote counts
+    // Streaks: load remote FIRST so rollover increments from correct base
     if (streaksRes.data?.length) {
       streaks = {};
       streaksRes.data.forEach(r => { streaks[r.task_id] = r.count; });
       localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
     } else {
       await dbPushStreaks();
+    }
+
+    // Daily state + cross-device day rollover
+    const states     = stateRes.data || [];
+    const todayState = states.find(s => s.date === today);
+    // Skip empty-checked states (produced by previous rollovers) when looking for prev completions
+    const prevState  = states.find(s => s.date < today && Object.values(s.checked || {}).some(v => v));
+
+    if (todayState) {
+      state = { date: todayState.date, checked: todayState.checked };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } else if (prevState) {
+      // Day changed — start fresh (streak recalc happens below)
+      state = { date: today, checked: {} };
+      saveState();
+    } else {
+      await dbPushState();
+    }
+
+    // Recalculate streaks from full history once per day (fixes stale counts)
+    if (localStorage.getItem(STREAK_DATE_KEY) !== today && prevState) {
+      const pastDays = states
+        .filter(s => s.date < today && Object.values(s.checked || {}).some(v => v))
+        .sort((a, b) => b.date.localeCompare(a.date));
+      const recalced = {};
+      tasks.forEach(t => {
+        let c = 0;
+        for (const ds of pastDays) { if (ds.checked[t.id]) c++; else break; }
+        recalced[t.id] = c;
+      });
+      streaks = recalced;
+      localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
+      localStorage.setItem(STREAK_DATE_KEY, today);
+      dbPushStreaks();
     }
 
     // Goals
@@ -717,7 +734,7 @@ function updateTimer() {
 
   if (diff <= 1000) {
     setTimeout(() => {
-      updateStreaks(state.checked, state.date);
+      updateStreaks(state.checked);
       state = { date: todayStr(), checked: {} };
       saveState();
       goals = { date: todayStr(), big: '', s1: '', s2: '' };
