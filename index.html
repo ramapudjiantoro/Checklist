@@ -12,382 +12,418 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Checklist" />
 <meta name="theme-color" content="#0f0f0f" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: #0f0f0f;
-    color: #f0f0f0;
+  body { margin: 0; padding: 0; background: #0f0f0f; }
+
+  /* ══════════════════════════════════════════════
+     CHECKLIST APP
+  ══════════════════════════════════════════════ */
+  #app-cl {
+    background: #0f0f0f; color: #f0f0f0;
     font-family: 'Segoe UI', system-ui, sans-serif;
-    min-height: 100vh;
-    padding: 20px;
-    max-width: 480px;
-    margin: 0 auto;
+    min-height: 100vh; padding: 20px;
+    max-width: 480px; margin: 0 auto;
   }
-
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-
-  h1 { font-size: 1.4rem; font-weight: 700; }
-
-  #date-display {
-    font-size: 0.82rem;
-    color: #555;
-    margin-bottom: 10px;
-  }
-
-  #timer {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #c0392b;
-    background: #1a1a1a;
-    padding: 4px 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  #progress-bar-wrap {
-    background: #222;
-    border-radius: 6px;
-    height: 5px;
-    margin-bottom: 6px;
-  }
-
-  #progress-bar {
-    height: 5px;
-    background: #f5a623;
-    border-radius: 6px;
-    transition: width 0.4s;
-  }
-
-  #progress-text {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.78rem;
-    color: #555;
-    margin-bottom: 14px;
-  }
-
-  .task {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 11px 4px;
-    border-bottom: 1px solid #1e1e1e;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .task:last-child { border-bottom: none; }
-
-  .task-check {
-    width: 22px;
-    height: 22px;
-    border: 2px solid #3a3a3a;
-    border-radius: 5px;
-    flex-shrink: 0;
-    align-self: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, border-color 0.15s;
-  }
-
-  .task.done .task-check { background: #f5a623; border-color: #f5a623; }
-  .task-check svg { display: none; }
-  .task.done .task-check svg { display: block; }
-
-  .task-label { flex: 1; font-size: 0.95rem; }
-  .task.done .task-label { text-decoration: line-through; }
-
-  .task-streak {
-    font-size: 0.7rem;
-    color: #444;
-    white-space: nowrap;
-    padding-top: 2px;
-    letter-spacing: 0.01em;
-    align-self: flex-start;
-  }
-  .task.done .task-streak { color: #c47f10; }
-
-  .task-actions {
-    display: flex;
-    gap: 4px;
-    max-width: 0;
-    overflow: hidden;
-    opacity: 0;
-    flex-shrink: 0;
-    transition: opacity 0.15s, max-width 0.15s;
-  }
-  .task:hover .task-actions { max-width: 64px; opacity: 1; }
-
-  .task-actions button {
-    background: none;
-    border: none;
-    color: #555;
-    font-size: 0.78rem;
-    cursor: pointer;
-    padding: 2px 5px;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-  .task-actions button:hover { color: #f0f0f0; background: #2a2a2a; }
-  .task-actions .del:hover { color: #e05555; }
-
-  #add-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-  }
-
-  #add-row input {
-    flex: 1;
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    color: #f0f0f0;
-    padding: 9px 12px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    outline: none;
-  }
+  #app-cl header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  #app-cl h1 { font-size: 1.4rem; font-weight: 700; }
+  #date-display { font-size: 0.82rem; color: #555; margin-bottom: 10px; }
+  #timer { font-size: 1.2rem; font-weight: 600; color: #c0392b; background: #1a1a1a; padding: 4px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; }
+  #progress-bar-wrap { background: #222; border-radius: 6px; height: 5px; margin-bottom: 6px; }
+  #progress-bar { height: 5px; background: #f5a623; border-radius: 6px; transition: width 0.4s; }
+  #progress-text { display: flex; justify-content: space-between; font-size: 0.78rem; color: #555; margin-bottom: 14px; }
+  #app-cl .task { display: flex; align-items: flex-start; gap: 12px; padding: 11px 4px; border-bottom: 1px solid #1e1e1e; cursor: pointer; user-select: none; }
+  #app-cl .task:last-child { border-bottom: none; }
+  #app-cl .task-check { width: 22px; height: 22px; border: 2px solid #3a3a3a; border-radius: 5px; flex-shrink: 0; align-self: center; display: flex; align-items: center; justify-content: center; transition: background 0.15s, border-color 0.15s; }
+  #app-cl .task.done .task-check { background: #f5a623; border-color: #f5a623; }
+  #app-cl .task-check svg { display: none; }
+  #app-cl .task.done .task-check svg { display: block; }
+  #app-cl .task-label { flex: 1; font-size: 0.95rem; }
+  #app-cl .task.done .task-label { text-decoration: line-through; }
+  #app-cl .task-streak { font-size: 0.7rem; color: #444; white-space: nowrap; padding-top: 2px; letter-spacing: 0.01em; align-self: flex-start; }
+  #app-cl .task.done .task-streak { color: #c47f10; }
+  #app-cl .task-actions { display: flex; gap: 4px; max-width: 0; overflow: hidden; opacity: 0; flex-shrink: 0; transition: opacity 0.15s, max-width 0.15s; }
+  #app-cl .task:hover .task-actions { max-width: 64px; opacity: 1; }
+  #app-cl .task-actions button { background: none; border: none; color: #555; font-size: 0.78rem; cursor: pointer; padding: 2px 5px; border-radius: 4px; white-space: nowrap; }
+  #app-cl .task-actions button:hover { color: #f0f0f0; background: #2a2a2a; }
+  #app-cl .task-actions .del:hover { color: #e05555; }
+  #add-row { display: flex; gap: 8px; margin-top: 10px; }
+  #add-row input { flex: 1; background: #1a1a1a; border: 1px solid #2a2a2a; color: #f0f0f0; padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; }
   #add-row input:focus { border-color: #444; }
-
-  #add-row button {
-    background: #f5a623;
-    color: #000;
-    border: none;
-    padding: 9px 16px;
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  #goals-section {
-    margin-top: 28px;
-    border-top: 1px solid #1e1e1e;
-    padding-top: 20px;
-  }
-
-  #goals-section h2 {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 16px;
-  }
-
-  .goal-block { margin-bottom: 18px; }
-
-  .goal-block label {
-    display: block;
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 6px;
-  }
-
-  .goal-block textarea {
-    width: 100%;
-    background: none;
-    border: none;
-    border-bottom: 1px solid #2a2a2a;
-    color: #f0f0f0;
-    font-family: inherit;
-    font-size: 1.1rem;
-    padding: 4px 0 6px;
-    resize: none;
-    outline: none;
-    line-height: 1.5;
-  }
-
+  #add-row button { background: #f5a623; color: #000; border: none; padding: 9px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+  #goals-section { margin-top: 28px; border-top: 1px solid #1e1e1e; padding-top: 20px; }
+  #app-cl #goals-section h2 { font-size: 0.78rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  #app-cl .goal-block { margin-bottom: 18px; }
+  #app-cl .goal-block label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 6px; }
+  #app-cl .goal-block textarea { width: 100%; background: none; border: none; border-bottom: 1px solid #2a2a2a; color: #f0f0f0; font-family: inherit; font-size: 1.1rem; padding: 4px 0 6px; resize: none; outline: none; line-height: 1.5; }
   #goal-big { font-weight: 700; }
-
-  .goal-block textarea::placeholder { color: #333; }
-  .goal-block textarea:focus { border-bottom-color: #555; }
-
-  .supporting-goals { margin-top: 14px; }
-
-  .supporting-goal {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .supporting-goal span {
-    color: #555;
-    font-size: 0.9rem;
-    padding-top: 4px;
-    flex-shrink: 0;
-  }
-
-  .supporting-goal textarea {
-    flex: 1;
-    background: none;
-    border: none;
-    border-bottom: 1px solid #2a2a2a;
-    color: #f0f0f0;
-    font-family: inherit;
-    font-size: 0.95rem;
-    padding: 4px 0 6px;
-    resize: none;
-    outline: none;
-    line-height: 1.5;
-  }
-
-  .supporting-goal textarea::placeholder { color: #333; }
-  .supporting-goal textarea:focus { border-bottom-color: #555; }
-
-  #export-btn {
-    display: block;
-    width: 100%;
-    margin-top: 28px;
-    padding: 12px;
-    background: #1a1a1a;
-    color: #888;
-    font-size: 0.9rem;
-    border: 1px solid #2a2a2a;
-    border-radius: 10px;
-    cursor: pointer;
-  }
+  #app-cl .goal-block textarea::placeholder { color: #333; }
+  #app-cl .goal-block textarea:focus { border-bottom-color: #555; }
+  #app-cl .supporting-goals { margin-top: 14px; }
+  #app-cl .supporting-goal { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  #app-cl .supporting-goal span { color: #555; font-size: 0.9rem; padding-top: 4px; flex-shrink: 0; }
+  #app-cl .supporting-goal textarea { flex: 1; background: none; border: none; border-bottom: 1px solid #2a2a2a; color: #f0f0f0; font-family: inherit; font-size: 0.95rem; padding: 4px 0 6px; resize: none; outline: none; line-height: 1.5; }
+  #app-cl .supporting-goal textarea::placeholder { color: #333; }
+  #app-cl .supporting-goal textarea:focus { border-bottom-color: #555; }
+  #export-btn { display: block; width: 100%; margin-top: 28px; padding: 12px; background: #1a1a1a; color: #888; font-size: 0.9rem; border: 1px solid #2a2a2a; border-radius: 10px; cursor: pointer; }
   #export-btn:hover { color: #f0f0f0; border-color: #444; }
-
-  /* Edit modal */
-  .modal-bg {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    z-index: 50;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-bg.show { display: flex; }
-
-  .modal {
-    background: #1a1a1a;
-    border-radius: 14px;
-    padding: 22px;
-    width: 90%;
-    max-width: 400px;
-  }
-  .modal h3 { font-size: 1rem; margin-bottom: 14px; }
-
-  .modal input {
-    width: 100%;
-    background: #111;
-    border: 1px solid #333;
-    color: #f0f0f0;
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    outline: none;
-    margin-bottom: 14px;
-  }
-
-  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
-
-  .modal-btns button {
-    padding: 8px 18px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-  .btn-confirm { background: #f5a623; color: #000; }
-  .btn-cancel  { background: #2a2a2a; color: #aaa; }
-
-  /* Export overlay */
-  #export-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.88);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 14px;
-  }
+  #app-cl .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+  #app-cl .modal-bg.show { display: flex; }
+  #app-cl .modal { background: #1a1a1a; border-radius: 14px; padding: 22px; width: 90%; max-width: 400px; }
+  #app-cl .modal h3 { font-size: 1rem; margin-bottom: 14px; }
+  #app-cl .modal input { width: 100%; background: #111; border: 1px solid #333; color: #f0f0f0; padding: 10px 12px; border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 14px; }
+  #app-cl .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  #app-cl .modal-btns button { padding: 8px 18px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+  #app-cl .btn-confirm { background: #f5a623; color: #000; }
+  #app-cl .btn-cancel { background: #2a2a2a; color: #aaa; }
+  #export-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 300; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
   #export-overlay.show { display: flex; }
   #export-overlay img { max-width: 92vw; max-height: 72vh; border-radius: 10px; }
-
-  .export-row { display: flex; gap: 10px; }
-  .export-row button { padding: 10px 22px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+  #app-cl .export-row { display: flex; gap: 10px; }
+  #app-cl .export-row button { padding: 10px 22px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
   #download-btn { background: #f5a623; color: #000; }
   #close-export { background: #2a2a2a; color: #aaa; }
+
+  /* ══════════════════════════════════════════════
+     FITNESS PLAN APP — CSS VARIABLES (global)
+  ══════════════════════════════════════════════ */
+  :root {
+    --bg: #0a0a0b; --surface: #111113; --surface2: #18181c; --border: #252530;
+    --text: #f0f0f2; --muted: #909098; --dim: #636370; --text-body: #c4c4d4;
+    --push: #ff4d4d; --push-bg: #1a0808; --push-mid: #ff7070;
+    --pull: #00c4a0; --pull-bg: #051512; --pull-mid: #2dd4b8;
+    --legs: #f5a623; --legs-bg: #130e02; --legs-mid: #fbbf24;
+    --rest: #6a6a7a; --rest-bg: #111116;
+    --protein: #a78bfa; --protein-bg: #13103a;
+    --carb: #fb923c; --carb-bg: #1a0e05;
+    --fat: #34d399; --fat-bg: #051a12;
+    --meal1: #60a5fa; --meal2: #f97316; --meal3: #a3e635;
+    --row-border: #191920; --row-hover: #16161e; --highlight-bg: #16161f;
+    --timing-bg: #0f0f18; --timing-border: #28284a; --timing-color: #9090cc;
+    --note-bg: #0d1520; --note-color: #90b8d8;
+    --pill-accent-bg: #141420; --pill-accent-border: #2a2a3a; --pill-accent-color: #9090b8;
+    --price-color: #8a7a40;
+    --radius-card: 16px; --radius-btn: 12px;
+  }
+  #app-ft[data-theme="light"] {
+    --bg: #f2f2f5; --surface: #ffffff; --surface2: #ebebef; --border: #d4d4de;
+    --text: #0a0a10; --muted: #606070; --dim: #909098; --text-body: #3a3a52;
+    --push-bg: #fff0f0; --pull-bg: #edfaf7; --legs-bg: #fff8ed; --rest-bg: #f2f2f5; --rest: #7a7a8a;
+    --protein-bg: #f4f0ff; --carb-bg: #fff4ec; --fat-bg: #edfaf4;
+    --row-border: #e4e4ec; --row-hover: #f0f0f8; --highlight-bg: #f0f0fa;
+    --timing-bg: #eeeef8; --timing-border: #c0c0e0; --timing-color: #4444aa;
+    --note-bg: #e8f4fd; --note-color: #1a6090;
+    --pill-accent-bg: #ebebf3; --pill-accent-border: #c8c8d8; --pill-accent-color: #5555aa;
+    --price-color: #8a6010;
+  }
+
+  /* ══════════════════════════════════════════════
+     FITNESS PLAN APP — scoped styles
+  ══════════════════════════════════════════════ */
+  #app-ft {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh; padding: 28px 20px 48px;
+    max-width: 1100px; margin: 0 auto;
+    transition: background 0.25s, color 0.25s;
+  }
+  #app-ft .master-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); gap: 16px; }
+  #app-ft .master-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 6vw, 3.2rem); letter-spacing: 2px; line-height: 1; color: var(--text); }
+  #app-ft .master-header h1 span { color: var(--push); }
+  #app-ft .header-meta { font-size: 0.8rem; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  #app-ft .meta-pills { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+  #app-ft .pill { font-family: 'DM Mono', monospace; font-size: 0.6rem; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); letter-spacing: 0.5px; white-space: nowrap; }
+  #app-ft .pill.accent { border-color: var(--pill-accent-border); background: var(--pill-accent-bg); color: var(--pill-accent-color); }
+  #app-ft .theme-toggle { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 0.62rem; font-family: 'DM Mono', monospace; letter-spacing: 0.5px; color: var(--muted); cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.25s; display: flex; align-items: center; gap: 6px; white-space: nowrap; align-self: flex-start; }
+  #app-ft .theme-toggle:hover { border-color: var(--dim); color: var(--text); }
+  #app-ft .theme-toggle-icon { font-size: 0.8rem; }
+  #app-ft .day-selector-wrap { position: relative; margin-bottom: 24px; }
+  #app-ft .day-selector { display: flex; gap: 7px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 4px; scrollbar-width: none; }
+  #app-ft .day-selector::-webkit-scrollbar { display: none; }
+  #app-ft .day-selector-wrap::after { content: ''; position: absolute; right: 0; top: 0; bottom: 4px; width: 32px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; border-radius: 0 var(--radius-btn) var(--radius-btn) 0; }
+  #app-ft .day-btn { flex: 0 0 calc((100% - 6*7px) / 7); min-width: 68px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-btn); padding: 10px 4px 8px; text-align: center; cursor: pointer; transition: background 0.2s, border-color 0.2s, box-shadow 0.2s; user-select: none; scroll-snap-align: start; position: relative; }
+  #app-ft .day-btn:active { transform: scale(0.97); }
+  #app-ft .day-btn .d-name { font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  #app-ft .day-btn .d-type { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 1px; line-height: 1; }
+  #app-ft .day-btn .d-num { font-size: 0.6rem; color: var(--muted); margin-top: 4px; line-height: 1.3; }
+  #app-ft .today-badge { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 0.45rem; letter-spacing: 0.5px; padding: 2px 5px; border-radius: 10px; white-space: nowrap; border: 1px solid; }
+  #app-ft .day-btn.push { border-top: 3px solid var(--push); }
+  #app-ft .day-btn.push .d-type { color: var(--push); }
+  #app-ft .day-btn.push .today-badge { background: var(--push-bg); border-color: var(--push); color: var(--push); }
+  #app-ft .day-btn.pull { border-top: 3px solid var(--pull); }
+  #app-ft .day-btn.pull .d-type { color: var(--pull); }
+  #app-ft .day-btn.pull .today-badge { background: var(--pull-bg); border-color: var(--pull); color: var(--pull); }
+  #app-ft .day-btn.legs { border-top: 3px solid var(--legs); }
+  #app-ft .day-btn.legs .d-type { color: var(--legs); }
+  #app-ft .day-btn.legs .today-badge { background: var(--legs-bg); border-color: var(--legs); color: var(--legs); }
+  #app-ft .day-btn.rest { border-top: 3px solid var(--rest); }
+  #app-ft .day-btn.rest .d-type { color: var(--rest); }
+  #app-ft .day-btn.rest .today-badge { background: var(--rest-bg); border-color: var(--dim); color: var(--muted); }
+  #app-ft .day-btn.push.active { background: var(--push-bg); border-color: var(--push); box-shadow: 0 0 20px #ff4d4d1a, inset 0 0 0 1px #ff4d4d22; }
+  #app-ft .day-btn.pull.active { background: var(--pull-bg); border-color: var(--pull); box-shadow: 0 0 20px #00c4a01a, inset 0 0 0 1px #00c4a022; }
+  #app-ft .day-btn.legs.active { background: var(--legs-bg); border-color: var(--legs); box-shadow: 0 0 20px #f5a6231a, inset 0 0 0 1px #f5a62322; }
+  #app-ft .day-btn.rest.active { background: var(--rest-bg); border-color: var(--dim); }
+  #app-ft .plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  #app-ft .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; transition: border-color 0.3s; }
+  #app-ft .section-header { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+  #app-ft .section-icon { font-size: 1rem; }
+  #app-ft .section-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1.5px; }
+  #app-ft .section-tag { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 0.58rem; padding: 3px 8px; border-radius: 20px; border: 1px solid; white-space: nowrap; transition: color 0.3s, border-color 0.3s; }
+  #app-ft .gym-day-header { padding: 14px 18px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  #app-ft .gym-day-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 1px; line-height: 1; transition: color 0.3s; }
+  #app-ft .gym-day-sub { font-size: 0.76rem; color: var(--muted); margin-top: 3px; }
+  #app-ft .gym-day-badge { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 0.56rem; padding: 4px 9px; border-radius: 20px; border: 1px solid; white-space: nowrap; transition: color 0.3s, border-color 0.3s; }
+  #app-ft .exercise-legend { padding: 6px 18px; display: flex; gap: 14px; border-bottom: 1px solid var(--row-border); }
+  #app-ft .legend-item { font-size: 0.62rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  #app-ft .exercise-list { padding: 4px 0; }
+  #app-ft .exercise-row { display: grid; grid-template-columns: 16px 1fr auto; align-items: start; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--row-border); transition: background 0.15s; }
+  #app-ft .exercise-row:last-child { border-bottom: none; }
+  #app-ft .exercise-row:hover { background: var(--row-hover); }
+  #app-ft .ex-num { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--dim); margin-top: 4px; text-align: right; }
+  #app-ft .ex-name { font-size: 0.92rem; font-weight: 600; color: var(--text); margin-bottom: 3px; display: flex; align-items: center; }
+  #app-ft .ex-note { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+  #app-ft .ex-sets { text-align: right; flex-shrink: 0; }
+  #app-ft .sets-val { font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 600; white-space: nowrap; transition: color 0.3s; }
+  #app-ft .rest-val { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-top: 2px; white-space: nowrap; }
+  #app-ft .compound-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
+  #app-ft .rest-day-content { padding: 48px 20px; text-align: center; }
+  #app-ft .rest-day-content .rest-icon { font-size: 2.8rem; margin-bottom: 14px; }
+  #app-ft .rest-day-content h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--muted); letter-spacing: 2px; margin-bottom: 10px; }
+  #app-ft .rest-day-content p { font-size: 0.82rem; color: var(--muted); line-height: 1.7; max-width: 280px; margin: 0 auto; }
+  #app-ft .rest-tip { display: inline-block; margin-top: 16px; font-size: 0.68rem; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; }
+  #app-ft .macro-bar-wrap { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+  #app-ft .macro-bar-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.7rem; color: var(--muted); }
+  #app-ft .macro-bar-track { height: 6px; background: var(--surface2); border-radius: 4px; overflow: hidden; display: flex; gap: 2px; }
+  #app-ft .macro-seg { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  #app-ft .macro-pills-row { display: flex; gap: 7px; margin-top: 10px; }
+  #app-ft .macro-pill { flex: 1; border-radius: 10px; padding: 8px 6px; border: 1px solid; text-align: center; }
+  #app-ft .macro-pill .mp-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.5px; line-height: 1; }
+  #app-ft .macro-pill .mp-label { font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; opacity: 0.65; }
+  #app-ft .macro-pill.protein { background: var(--protein-bg); border-color: #6d4fd4; color: var(--protein); }
+  #app-ft .macro-pill.carb { background: var(--carb-bg); border-color: #c2621a; color: var(--carb); }
+  #app-ft .macro-pill.fat { background: var(--fat-bg); border-color: #1a7a52; color: var(--fat); }
+  #app-ft .timing-highlight { margin: 10px 18px 0; background: var(--timing-bg); border: 1px solid var(--timing-border); border-radius: 8px; padding: 8px 12px; font-size: 0.74rem; color: var(--timing-color); display: flex; align-items: center; gap: 6px; }
+  #app-ft .meal-list { padding: 4px 0; }
+  #app-ft .meal-block { padding: 12px 18px; border-bottom: 1px solid var(--row-border); }
+  #app-ft .meal-block:last-child { border-bottom: none; }
+  #app-ft .meal-block.highlighted { background: var(--highlight-bg); }
+  #app-ft .meal-header { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; row-gap: 3px; }
+  #app-ft .meal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  #app-ft .meal-title { font-size: 0.9rem; font-weight: 700; }
+  #app-ft .meal-time { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text); margin-left: auto; font-weight: 500; }
+  #app-ft .meal-kcal { font-family: 'DM Mono', monospace; font-size: 0.62rem; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); }
+  #app-ft .meal-items { padding-left: 13px; }
+  #app-ft .meal-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 3px 0; font-size: 0.82rem; color: var(--text-body); }
+  #app-ft .meal-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex-shrink: 0; margin-left: 8px; }
+  #app-ft .meal-item-prot { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); }
+  #app-ft .meal-item-price { font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--price-color); }
+  #app-ft .meal-macros-mini { display: flex; gap: 10px; margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--border); }
+  #app-ft .mmm { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); }
+  #app-ft .mmm span { font-weight: 600; }
+  #app-ft .mmm.p span { color: var(--protein); }
+  #app-ft .mmm.c span { color: var(--carb); }
+  #app-ft .mmm.f span { color: var(--fat); }
+  #app-ft .meal-cost-row { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; padding: 6px 0 0; border-top: 1px dashed var(--border); font-size: 0.66rem; color: var(--muted); }
+  #app-ft .meal-cost-val { font-family: 'DM Mono', monospace; font-size: 0.66rem; color: #9a8f50; font-weight: 500; }
+  #app-ft .budget-footer { border-top: 1px solid var(--border); padding: 10px 18px 12px; display: flex; flex-direction: column; gap: 5px; }
+  #app-ft .budget-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: var(--muted); }
+  #app-ft .budget-row .bval { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--text); }
+  #app-ft .budget-row.ok .bval { color: var(--pull); }
+  #app-ft .gym-note-box { margin-top: 6px; font-size: 0.72rem; padding: 6px 10px; background: var(--note-bg); border-radius: 6px; border-left: 2px solid var(--meal1); color: var(--note-color); }
+  #app-ft .scrollable { max-height: 520px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .fade-in { animation: fadeSlide 0.22s ease both; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @media (max-width: 720px) {
+    #app-ft { padding: 20px 14px 56px; }
+    #app-ft .master-header { margin-bottom: 20px; }
+    #app-ft .plans-grid { grid-template-columns: 1fr; gap: 12px; }
+    #app-ft .day-btn { flex: 0 0 76px; min-width: 76px; padding: 11px 4px 9px; }
+    #app-ft .day-btn .d-type { font-size: 1.05rem; }
+    #app-ft .scrollable { max-height: none; overflow-y: visible; }
+    #app-ft .exercise-row { padding: 10px 14px; }
+    #app-ft .gym-day-header { padding: 12px 14px 10px; }
+    #app-ft .exercise-legend { padding: 6px 14px; }
+    #app-ft .section-header { padding: 12px 14px; }
+    #app-ft .macro-bar-wrap { padding: 12px 14px; }
+    #app-ft .meal-block { padding: 11px 14px; }
+    #app-ft .timing-highlight { margin: 10px 14px 0; }
+    #app-ft .rest-day-content { padding: 36px 14px; }
+  }
+  @media (max-width: 480px) {
+    #app-ft .pill.accent { display: none; }
+    #app-ft .header-meta { font-size: 0.72rem; }
+  }
+
+  /* ══════════════════════════════════════════════
+     FLOATING APP SWITCH BUTTON
+  ══════════════════════════════════════════════ */
+  #app-switch-wrap {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  #app-switch-label {
+    font-size: 0.65rem; font-family: 'Segoe UI', system-ui, sans-serif;
+    color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.55);
+    padding: 3px 10px; border-radius: 12px; white-space: nowrap;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+    backdrop-filter: blur(4px);
+  }
+  #app-switch-wrap:hover #app-switch-label { opacity: 1; transform: translateY(0); }
+  #app-switch {
+    width: 58px; height: 58px; border-radius: 50%; border: none;
+    font-size: 1.5rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.45), 0 0 0 2px rgba(255,255,255,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  #app-switch:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(0,0,0,0.55), 0 0 0 2px rgba(255,255,255,0.12); }
+  #app-switch:active { transform: scale(0.94); }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Checklist</h1>
-  <div id="timer">--:--:--</div>
-</header>
+<!-- ══════════════════════════════════════════════
+     APP 1: CHECKLIST (default active)
+══════════════════════════════════════════════ -->
+<div id="app-cl">
+  <header>
+    <h1>Checklist</h1>
+    <div id="timer">--:--:--</div>
+  </header>
 
-<div id="date-display"></div>
-<div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
-<div id="progress-text"></div>
+  <div id="date-display"></div>
+  <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  <div id="progress-text"></div>
 
-<div id="task-list"></div>
+  <div id="task-list"></div>
 
-<div id="add-row">
-  <input type="text" id="new-task-input" placeholder="Add a task…" />
-  <button id="add-task-btn">Add</button>
-</div>
-
-<div id="goals-section">
-  <h2>Today's Goals</h2>
-  <div class="goal-block">
-    <label>1 Big Goal Today (2 hrs)</label>
-    <textarea id="goal-big" rows="1" placeholder="UrgentThing"></textarea>
+  <div id="add-row">
+    <input type="text" id="new-task-input" placeholder="Add a task…" />
+    <button id="add-task-btn">Add</button>
   </div>
-  <div class="goal-block">
-    <label>2 Supporting Goals (30 min each)</label>
-    <div class="supporting-goals">
-      <div class="supporting-goal">
-        <span>1.</span>
-        <textarea id="goal-s1" rows="1" placeholder="ImportantThing"></textarea>
+
+  <div id="goals-section">
+    <h2>Today's Goals</h2>
+    <div class="goal-block">
+      <label>1 Big Goal Today (2 hrs)</label>
+      <textarea id="goal-big" rows="1" placeholder="UrgentThing"></textarea>
+    </div>
+    <div class="goal-block">
+      <label>2 Supporting Goals (30 min each)</label>
+      <div class="supporting-goals">
+        <div class="supporting-goal">
+          <span>1.</span>
+          <textarea id="goal-s1" rows="1" placeholder="ImportantThing"></textarea>
+        </div>
+        <div class="supporting-goal">
+          <span>2.</span>
+          <textarea id="goal-s2" rows="1" placeholder="BasicSelfMaintenanceThing"></textarea>
+        </div>
       </div>
-      <div class="supporting-goal">
-        <span>2.</span>
-        <textarea id="goal-s2" rows="1" placeholder="BasicSelfMaintenanceThing"></textarea>
+    </div>
+  </div>
+
+  <button id="export-btn">📸 Export Summary</button>
+
+  <!-- Edit modal -->
+  <div class="modal-bg" id="edit-modal">
+    <div class="modal">
+      <h3>Edit Task</h3>
+      <input type="text" id="edit-input" />
+      <div class="modal-btns">
+        <button class="btn-cancel" id="edit-cancel">Cancel</button>
+        <button class="btn-confirm" id="edit-confirm">Save</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Export overlay -->
+  <div id="export-overlay">
+    <img id="export-img" src="" alt="Summary" />
+    <div class="export-row">
+      <button id="download-btn">⬇ Download</button>
+      <button id="close-export">Close</button>
     </div>
   </div>
 </div>
 
-<button id="export-btn">📸 Export Summary</button>
-
-<!-- Edit modal -->
-<div class="modal-bg" id="edit-modal">
-  <div class="modal">
-    <h3>Edit Task</h3>
-    <input type="text" id="edit-input" />
-    <div class="modal-btns">
-      <button class="btn-cancel" id="edit-cancel">Cancel</button>
-      <button class="btn-confirm" id="edit-confirm">Save</button>
+<!-- ══════════════════════════════════════════════
+     APP 2: FITNESS PLAN (hidden initially)
+══════════════════════════════════════════════ -->
+<div id="app-ft" data-theme="dark" style="display:none">
+  <div class="master-header">
+    <div class="header-left">
+      <h1>FITNESS <span>PLAN</span></h1>
+      <div class="header-meta">21 yo · 60.5 kg · 165 cm · Goal: 65–67 kg lean · Deadline: Aug 30, 2026</div>
+    </div>
+    <div class="meta-pills">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+        <span class="theme-toggle-icon">☀️</span><span id="themeLabel">LIGHT</span>
+      </button>
+      <div class="pill accent">PPL ×2 · 6 DAYS</div>
+      <div class="pill accent">LEAN BULK · +250 KCAL SURPLUS</div>
+      <div class="pill accent">05:00–07:00 GYM SESSION</div>
+    </div>
+  </div>
+  <div class="day-selector-wrap">
+    <div class="day-selector" id="daySelector">
+      <div class="day-btn push active" data-day="0" onclick="selectDay(0)">
+        <div class="d-name">SEN</div><div class="d-type">PUSH A</div><div class="d-num">Chest · Delt · Tri</div>
+      </div>
+      <div class="day-btn pull" data-day="1" onclick="selectDay(1)">
+        <div class="d-name">SEL</div><div class="d-type">PULL A</div><div class="d-num">Back · Bicep</div>
+      </div>
+      <div class="day-btn legs" data-day="2" onclick="selectDay(2)">
+        <div class="d-name">RAB</div><div class="d-type">LEGS A</div><div class="d-num">Quad · Calf</div>
+      </div>
+      <div class="day-btn push" data-day="3" onclick="selectDay(3)">
+        <div class="d-name">KAM</div><div class="d-type">PUSH B</div><div class="d-num">Upper · Delt · Tri</div>
+      </div>
+      <div class="day-btn pull" data-day="4" onclick="selectDay(4)">
+        <div class="d-name">JUM</div><div class="d-type">PULL B</div><div class="d-num">Width · Peak</div>
+      </div>
+      <div class="day-btn legs" data-day="5" onclick="selectDay(5)">
+        <div class="d-name">SAB</div><div class="d-type">LEGS B</div><div class="d-num">Ham · Glute</div>
+      </div>
+      <div class="day-btn rest" data-day="6" onclick="selectDay(6)">
+        <div class="d-name">MIN</div><div class="d-type">REST</div><div class="d-num">Recovery</div>
+      </div>
+    </div>
+  </div>
+  <div class="plans-grid">
+    <div class="section-card" id="gymCard">
+      <div class="section-header">
+        <span class="section-icon">🏋️</span>
+        <h2>GYM PLAN</h2>
+        <div class="section-tag" id="gymTag" style="border-color:var(--push); color:var(--push);">PUSH A</div>
+      </div>
+      <div id="gymContent"></div>
+    </div>
+    <div class="section-card" id="nutritionCard">
+      <div class="section-header">
+        <span class="section-icon">🍽️</span>
+        <h2>NUTRITION PLAN</h2>
+        <div class="section-tag" id="nutritionTag" style="border-color:var(--protein); color:var(--protein);">2,500–2,600 KCAL</div>
+      </div>
+      <div id="nutritionContent"></div>
     </div>
   </div>
 </div>
 
-<!-- Export overlay -->
-<div id="export-overlay">
-  <img id="export-img" src="" alt="Summary" />
-  <div class="export-row">
-    <button id="download-btn">⬇ Download</button>
-    <button id="close-export">Close</button>
-  </div>
+<!-- ══════════════════════════════════════════════
+     FLOATING SWITCH BUTTON
+══════════════════════════════════════════════ -->
+<div id="app-switch-wrap">
+  <div id="app-switch-label">Fitness Plan</div>
+  <button id="app-switch" onclick="switchApp()"></button>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     CHECKLIST SCRIPT
+══════════════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ── Supabase ──────────────────────────────────────────────────────────────────
@@ -859,5 +895,423 @@ setInterval(updateTimer, 1000);
 updateTimer();
 syncFromSupabase();
 </script>
+
+<!-- ══════════════════════════════════════════════
+     FITNESS PLAN SCRIPT
+══════════════════════════════════════════════ -->
+<script>
+const DAY_DATA = [
+  // 0 PUSH A (SENIN)
+  {
+    type: 'push', label: 'PUSH A', day: 'SENIN',
+    focus: 'Chest / Shoulder / Tricep',
+    exercises: [
+      { name: 'Barbell Bench Press', note: 'Full ROM, control eccentric 3 sec, compound king', sets: '4×8–10', rest: '2–3 min', compound: true },
+      { name: 'Incline Dumbbell Press', note: '30–45° incline, upper chest focus', sets: '3×10–12', rest: '90 sec', compound: true },
+      { name: 'Cable Chest Fly (Mid)', note: 'Squeeze di peak kontraksi, isolation', sets: '3×12–15', rest: '60 sec', compound: false },
+      { name: 'Overhead Press (BB/DB)', note: 'Jangan flare elbow, brace core', sets: '3×8–10', rest: '90 sec', compound: true },
+      { name: 'Lateral Raise', note: 'Light & strict, 3 sec eccentric', sets: '3×15–20', rest: '60 sec', compound: false },
+      { name: 'Tricep Pushdown (Cable)', note: 'Lock elbow di sisi, squeeze bawah', sets: '3×12–15', rest: '60 sec', compound: false },
+    ]
+  },
+  // 1 PULL A (SELASA)
+  {
+    type: 'pull', label: 'PULL A', day: 'SELASA',
+    focus: 'Back Thickness / Bicep / Rear Delt',
+    exercises: [
+      { name: 'Barbell Bent-Over Row', note: 'Hinge hip, bukan squat row, back thickness', sets: '4×8–10', rest: '2–3 min', compound: true },
+      { name: 'Lat Pulldown (Wide Grip)', note: 'Retract scapula, tarik ke dada bawah', sets: '3×10–12', rest: '90 sec', compound: true },
+      { name: 'Seated Cable Row', note: 'Squeeze mid-back, jangan swinging', sets: '3×10–12', rest: '90 sec', compound: true },
+      { name: 'Face Pull (Cable)', note: 'Rear delt + external rotation, kesehatan bahu', sets: '3×15–20', rest: '60 sec', compound: false },
+      { name: 'Barbell Curl', note: 'Strict ROM, no swinging', sets: '3×10–12', rest: '60 sec', compound: false },
+      { name: 'Hammer Curl', note: 'Brachialis + forearm thickness', sets: '2×12–15', rest: '60 sec', compound: false },
+    ]
+  },
+  // 2 LEGS A (RABU)
+  {
+    type: 'legs', label: 'LEGS A', day: 'RABU',
+    focus: 'Quad-Dominant / Calf',
+    exercises: [
+      { name: 'Barbell Back Squat', note: 'PRIORITAS — depth parallel minimum, brace core', sets: '4×6–10', rest: '3 min', compound: true },
+      { name: 'Leg Press', note: 'High foot placement untuk quad sweep', sets: '3×10–12', rest: '2 min', compound: true },
+      { name: 'Leg Extension', note: 'Quad isolation, pause sepenuhnya di atas', sets: '3×12–15', rest: '60 sec', compound: false },
+      { name: 'Romanian Deadlift', note: 'Hip hinge, hamstring stretch, bukan back exercise', sets: '3×10–12', rest: '90 sec', compound: true },
+      { name: 'Standing Calf Raise', note: 'Full ROM, semua jalan ke atas dan bawah', sets: '4×15–20', rest: '60 sec', compound: false },
+    ]
+  },
+  // 3 PUSH B (KAMIS)
+  {
+    type: 'push', label: 'PUSH B', day: 'KAMIS',
+    focus: 'Upper Chest / Delt / Tricep',
+    exercises: [
+      { name: 'Incline Barbell Press', note: 'Upper chest prioritas, lebih steep dari Push A', sets: '4×8–10', rest: '2–3 min', compound: true },
+      { name: 'Dumbbell Bench Press', note: 'Greater ROM daripada barbell, stretch chest', sets: '3×10–12', rest: '90 sec', compound: true },
+      { name: 'Cable Fly (Low-to-High)', note: 'Upper chest kontraksi, tarik dari bawah ke atas', sets: '3×12–15', rest: '60 sec', compound: false },
+      { name: 'Dumbbell Lateral Raise', note: 'Side delt width, bukan angkat bahu', sets: '4×15–20', rest: '60 sec', compound: false },
+      { name: 'Overhead Tricep Extension', note: 'Long head stretch, arms behind head', sets: '3×12–15', rest: '60 sec', compound: false },
+      { name: 'Dips (Weighted if able)', note: 'Lean forward slight untuk lower chest + tri', sets: '3×8–12', rest: '90 sec', compound: true },
+    ]
+  },
+  // 4 PULL B (JUMAT)
+  {
+    type: 'pull', label: 'PULL B', day: 'JUMAT',
+    focus: 'Back Width / Bicep Peak',
+    exercises: [
+      { name: 'Pull-Up / Assisted Pull-Up', note: 'Full dead hang ke chin over bar, lat width', sets: '4×6–10', rest: '2 min', compound: true },
+      { name: 'Single-Arm Dumbbell Row', note: 'Full stretch + full contraction, heavy', sets: '3×10–12/side', rest: '90 sec', compound: true },
+      { name: 'Cable Pullover', note: 'Lat isolation, stretch overhead', sets: '3×12–15', rest: '60 sec', compound: false },
+      { name: 'Reverse Pec Deck', note: 'Rear delt — bukan trapezius', sets: '3×15–20', rest: '60 sec', compound: false },
+      { name: 'EZ Bar Curl', note: 'Wrist-friendly, bicep peak', sets: '3×10–12', rest: '60 sec', compound: false },
+      { name: 'Incline Dumbbell Curl', note: 'Long head stretch, bicep fullness', sets: '2×12–15', rest: '60 sec', compound: false },
+    ]
+  },
+  // 5 LEGS B (SABTU)
+  {
+    type: 'legs', label: 'LEGS B', day: 'SABTU',
+    focus: 'Hamstring / Glute / Calf',
+    exercises: [
+      { name: 'Romanian Deadlift (Heavy)', note: 'Hip hinge, hamstring and glute dominant', sets: '4×8–10', rest: '2–3 min', compound: true },
+      { name: 'Leg Curl (Lying/Seated)', note: 'Hamstring isolation, control eccentric', sets: '3×10–12', rest: '90 sec', compound: false },
+      { name: 'Bulgarian Split Squat', note: 'Unilateral, fixes imbalance, quad + glute', sets: '3×8–10/side', rest: '2 min', compound: true },
+      { name: 'Hip Thrust (Barbell)', note: 'Glute activation, 1 sec squeeze di atas', sets: '3×12–15', rest: '90 sec', compound: true },
+      { name: 'Seated Calf Raise', note: 'Soleus focus, berbeda dari standing', sets: '4×15–20', rest: '60 sec', compound: false },
+    ]
+  },
+  // 6 REST (MINGGU)
+  {
+    type: 'rest', label: 'REST', day: 'MINGGU',
+    focus: 'Active Recovery',
+    exercises: []
+  }
+];
+
+const MEALS = [
+  {
+    id: 0,
+    title: 'MEAL 1 — Pre/Post Gym',
+    time: '05:30–07:30',
+    kcal: '~650 kcal',
+    protein: '45g', carb: '80g', fat: '18g',
+    color: 'var(--meal1)',
+    mealCost: '~Rp 12.000',
+    items: [
+      { name: '3 butir telur (orak-arik/rebus)', prot: '18g', price: 'Rp 6.000' },
+      { name: 'Nasi putih 150g (cooked)',         prot: '7g',  price: 'Rp 1.000' },
+      { name: 'Tempe goreng/bacem 100g',          prot: '19g', price: 'Rp 3.000' },
+      { name: '1 pisang — pre-gym carb',          prot: '1g',  price: 'Rp 2.000' },
+    ],
+    gymNote: '🍌 Pisang dimakan 15–20 menit sebelum gym'
+  },
+  {
+    id: 1,
+    title: 'MEAL 2 — Makan Besar',
+    time: '12:00–13:00',
+    kcal: '~750 kcal',
+    protein: '55g', carb: '90g', fat: '22g',
+    color: 'var(--meal2)',
+    mealCost: '~Rp 17.000',
+    items: [
+      { name: 'Nasi putih 200g (cooked)',     prot: '9g',  price: 'Rp 1.500' },
+      { name: 'Ayam dada 150g (goreng/bakar)',prot: '46g', price: 'Rp 13.500' },
+      { name: 'Sayur (bayam/kangkung/apapun)',prot: '2g',  price: 'Rp 2.000' },
+    ],
+    gymNote: null
+  },
+  {
+    id: 2,
+    title: 'MEAL 3 — Malam',
+    time: '19:00–20:00',
+    kcal: '~700 kcal',
+    protein: '50g', carb: '75g', fat: '22g',
+    color: 'var(--meal3)',
+    mealCost: '~Rp 8.000–19.000',
+    items: [
+      { name: 'Nasi putih 150g (cooked)',    prot: '7g',   price: 'Rp 1.000' },
+      { name: 'Ayam / ikan / tempe pilihan', prot: '~30g', price: 'Rp 3.000–9.000' },
+      { name: '2 butir telur rebus',         prot: '12g',  price: 'Rp 4.000' },
+      { name: 'Susu UHT 200ml (opsional)',   prot: '6g',   price: '+Rp 5.000' },
+    ],
+    gymNote: null
+  }
+];
+
+const COLOR = {
+  push: 'var(--push)',
+  pull: 'var(--pull)',
+  legs: 'var(--legs)',
+  rest: 'var(--rest)'
+};
+
+let todayIdx = -1;
+
+function selectDay(idx) {
+  document.querySelectorAll('#app-ft .day-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`#app-ft [data-day="${idx}"]`).classList.add('active');
+  renderGym(idx);
+  renderNutrition(idx);
+}
+
+function renderGym(idx) {
+  const d = DAY_DATA[idx];
+  const col = COLOR[d.type];
+  const tag = document.getElementById('gymTag');
+  tag.textContent = d.label;
+  tag.style.borderColor = col;
+  tag.style.color = col;
+
+  const content = document.getElementById('gymContent');
+
+  if (d.type === 'rest') {
+    content.innerHTML = `
+      <div class="rest-day-content fade-in">
+        <div class="rest-icon">😴</div>
+        <h3>ACTIVE RECOVERY</h3>
+        <p>Istirahat penuh dari gym. Boleh jalan santai, stretching ringan, atau dumbbell + pull-up bar di rumah dengan intensitas rendah.</p>
+        <span class="rest-tip">💤 Tidur ≥7 jam malam ini. Recovery = growth.</span>
+      </div>`;
+    return;
+  }
+
+  const exRows = d.exercises.map((e, i) => `
+    <div class="exercise-row">
+      <div class="ex-num">${i+1}</div>
+      <div class="ex-info">
+        <div class="ex-name">
+          <span class="compound-dot" style="background:${e.compound ? col : 'var(--dim)'}"></span>${e.name}
+        </div>
+        <div class="ex-note">${e.note}</div>
+      </div>
+      <div class="ex-sets">
+        <div class="sets-val" style="color:${col}">${e.sets}</div>
+        <div class="rest-val">${e.rest}</div>
+      </div>
+    </div>
+  `).join('');
+
+  content.innerHTML = `
+    <div class="gym-day-header">
+      <div>
+        <div class="gym-day-label" style="color:${col}">${d.day} — ${d.label}</div>
+        <div class="gym-day-sub">${d.focus}</div>
+      </div>
+      <div class="gym-day-badge" style="border-color:${col};color:${col}">~60–75 min</div>
+    </div>
+    <div class="exercise-legend">
+      <div class="legend-item"><span class="compound-dot" style="background:${col}"></span>Compound</div>
+      <div class="legend-item"><span class="compound-dot" style="background:var(--dim)"></span>Isolation</div>
+    </div>
+    <div class="exercise-list scrollable fade-in">${exRows}</div>`;
+}
+
+function renderNutrition(idx) {
+  const d = DAY_DATA[idx];
+  const isGymDay = d.type !== 'rest';
+  const content = document.getElementById('nutritionContent');
+  const nutTag = document.getElementById('nutritionTag');
+  nutTag.textContent = isGymDay ? '2,500–2,600 KCAL' : '2,200–2,400 KCAL';
+
+  const macroBar = `
+    <div class="macro-bar-wrap">
+      <div class="macro-bar-label">
+        <span>Distribusi Makro Harian</span>
+        <span style="font-family:'DM Mono',monospace;">${isGymDay ? '2,500–2,600 kcal' : '2,200–2,400 kcal'}</span>
+      </div>
+      <div class="macro-bar-track">
+        <div class="macro-seg" style="width:24%; background:var(--protein)"></div>
+        <div class="macro-seg" style="width:48%; background:var(--carb)"></div>
+        <div class="macro-seg" style="width:26%; background:var(--fat)"></div>
+      </div>
+      <div class="macro-pills-row">
+        <div class="macro-pill protein">
+          <div class="mp-val">${isGymDay ? '155–160g' : '155g'}</div>
+          <div class="mp-label">Protein</div>
+        </div>
+        <div class="macro-pill carb">
+          <div class="mp-val">${isGymDay ? '290–310g' : '250–270g'}</div>
+          <div class="mp-label">Karbo</div>
+        </div>
+        <div class="macro-pill fat">
+          <div class="mp-val">70–75g</div>
+          <div class="mp-label">Lemak</div>
+        </div>
+      </div>
+    </div>`;
+
+  const timingNote = !isGymDay
+    ? `<div class="timing-highlight">💤 Rest day — karbo sedikit lebih rendah. Protein tetap sama untuk muscle recovery.</div>`
+    : `<div class="timing-highlight">⚡ Gym day — hit semua 3 meal, jangan skip. Protein &amp; karbo post-gym = recovery + growth.</div>`;
+
+  const mealItems = MEALS.map((m, i) => {
+    const isHighlighted = isGymDay && i === 0;
+    const itemsHtml = m.items.map(it => `
+      <div class="meal-item">
+        <span class="meal-item-name">· ${it.name}</span>
+        <span class="meal-item-right">
+          <span class="meal-item-prot">${it.prot}</span>
+          <span class="meal-item-price">${it.price}</span>
+        </span>
+      </div>`).join('');
+
+    const noteHtml = (isGymDay && m.gymNote)
+      ? `<div class="gym-note-box">${m.gymNote}</div>`
+      : '';
+
+    return `
+      <div class="meal-block ${isHighlighted ? 'highlighted' : ''}">
+        <div class="meal-header">
+          <div class="meal-dot" style="background:${m.color}"></div>
+          <div class="meal-title" style="color:${m.color}">${m.title}</div>
+          <div class="meal-time">${m.time}</div>
+          <div class="meal-kcal">${m.kcal}</div>
+        </div>
+        <div class="meal-items">${itemsHtml}</div>
+        ${noteHtml}
+        <div class="meal-macros-mini">
+          <div class="mmm p">P <span>${m.protein}</span></div>
+          <div class="mmm c">C <span>${m.carb}</span></div>
+          <div class="mmm f">F <span>${m.fat}</span></div>
+          <div class="meal-cost-row" style="margin-left:auto; border:none; padding:0; margin-top:0;">
+            <span class="meal-cost-val">${m.mealCost}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const budgetFooter = `
+    <div class="budget-footer">
+      <div class="budget-row">
+        <span>Total per hari</span>
+        <span class="bval">~Rp 37.000–48.000</span>
+      </div>
+      <div class="budget-row ok">
+        <span>Budget tersedia</span>
+        <span class="bval">Rp 50.000/hari ✓</span>
+      </div>
+      <div class="budget-row" style="opacity:0.6; font-size:0.6rem;">
+        <span>Ref harga: telur Rp 2rb/butir · ayam Rp 9rb/100g · tempe Rp 3rb/100g</span>
+      </div>
+    </div>`;
+
+  content.innerHTML = `${macroBar}${timingNote}<div class="meal-list scrollable fade-in">${mealItems}</div>${budgetFooter}`;
+}
+
+// ── THEME TOGGLE ──
+function toggleTheme() {
+  const appFt = document.getElementById('app-ft');
+  const isLight = appFt.getAttribute('data-theme') === 'light';
+  const next = isLight ? 'dark' : 'light';
+  appFt.setAttribute('data-theme', next);
+  localStorage.setItem('fitness-theme', next);
+  updateToggleUI(next);
+  updateMetaTheme();
+}
+function updateToggleUI(theme) {
+  const icon = document.getElementById('themeToggle').querySelector('.theme-toggle-icon');
+  const label = document.getElementById('themeLabel');
+  if (theme === 'light') {
+    icon.textContent = '🌙'; label.textContent = 'DARK';
+  } else {
+    icon.textContent = '☀️'; label.textContent = 'LIGHT';
+  }
+}
+// Apply saved theme on load (default: dark)
+(function() {
+  const saved = localStorage.getItem('fitness-theme') || 'dark';
+  document.getElementById('app-ft').setAttribute('data-theme', saved);
+  window.addEventListener('DOMContentLoaded', () => updateToggleUI(saved));
+})();
+
+// Generate apple-touch-icon PNG via canvas (180×180 for iOS homescreen)
+(function() {
+  try {
+    const size = 180, s = size / 100;
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+      ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+      ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+      ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+      ctx.closePath();
+    }
+    ctx.fillStyle = '#111'; rr(0,0,size,size,20*s); ctx.fill();
+    ctx.fillStyle = '#ff4d4d'; rr(3*s,20*s,22*s,60*s,6*s); ctx.fill();
+    ctx.fillStyle = '#cc2222'; rr(25*s,32*s,9*s,36*s,3*s); ctx.fill();
+    ctx.fillStyle = '#555555'; rr(34*s,42*s,32*s,16*s,4*s); ctx.fill();
+    ctx.fillStyle = '#888888'; rr(34*s,42*s,32*s,5*s,2*s); ctx.fill();
+    ctx.fillStyle = '#cc2222'; rr(66*s,32*s,9*s,36*s,3*s); ctx.fill();
+    ctx.fillStyle = '#ff4d4d'; rr(75*s,20*s,22*s,60*s,6*s); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.14)'; rr(6*s,23*s,9*s,24*s,4*s); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.14)'; rr(85*s,23*s,9*s,24*s,4*s); ctx.fill();
+    const link = document.getElementById('appleIcon');
+    if (link) link.href = c.toDataURL('image/png');
+  } catch(e) {}
+})();
+
+// Mark today's button
+const jsDay = new Date().getDay(); // 0=Sun,1=Mon,...
+const dayMap = { 1:0, 2:1, 3:2, 4:3, 5:4, 6:5, 0:6 };
+todayIdx = dayMap[jsDay];
+if (todayIdx !== undefined) {
+  const todayBtn = document.querySelector(`#app-ft [data-day="${todayIdx}"]`);
+  if (todayBtn) {
+    const badge = document.createElement('div');
+    badge.className = 'today-badge';
+    badge.textContent = 'TODAY';
+    todayBtn.prepend(badge);
+  }
+  selectDay(todayIdx);
+} else {
+  selectDay(0);
+}
+</script>
+
+<!-- ══════════════════════════════════════════════
+     APP SWITCH SCRIPT
+══════════════════════════════════════════════ -->
+<script>
+let activeApp = localStorage.getItem('active-app') || 'cl';
+function switchApp() {
+  const next = activeApp === 'cl' ? 'ft' : 'cl';
+  document.getElementById('app-' + activeApp).style.display = 'none';
+  document.getElementById('app-' + next).style.display = '';
+  activeApp = next;
+  localStorage.setItem('active-app', activeApp);
+  updateSwitchBtn();
+  updateMetaTheme();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function updateSwitchBtn() {
+  const btn = document.getElementById('app-switch');
+  const lbl = document.getElementById('app-switch-label');
+  if (activeApp === 'cl') {
+    btn.textContent = '💪';
+    btn.style.background = 'linear-gradient(135deg, #ff4d4d 0%, #c41a1a 100%)';
+    lbl.textContent = 'Fitness Plan';
+  } else {
+    btn.textContent = '✅';
+    btn.style.background = 'linear-gradient(135deg, #f5a623 0%, #c07800 100%)';
+    lbl.textContent = 'Checklist';
+  }
+}
+function updateMetaTheme() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (activeApp === 'cl') { meta.content = '#0f0f0f'; }
+  else {
+    const t = document.getElementById('app-ft').getAttribute('data-theme');
+    meta.content = t === 'light' ? '#f2f2f5' : '#0a0a0b';
+  }
+}
+// Init
+if (activeApp === 'ft') {
+  document.getElementById('app-cl').style.display = 'none';
+  document.getElementById('app-ft').style.display = '';
+}
+updateSwitchBtn();
+</script>
+
 </body>
 </html>
