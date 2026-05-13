@@ -481,7 +481,7 @@ function loadState() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     if (raw.date !== todayStr()) {
-      if (raw.date && raw.checked) updateStreaks(raw.checked, raw.date);
+      // Don't recalc streaks here — syncFromSupabase will use authoritative Supabase data
       return { date: todayStr(), checked: {} };
     }
     return raw;
@@ -510,11 +510,9 @@ function updateStreaks(checkedMap) {
   const today = todayStr();
   if (localStorage.getItem(STREAK_DATE_KEY) === today) return;
   const s = loadStreaks();
-  const day = getDayNumber(); // already new day at rollover time
   tasks.forEach(t => {
-    // cap current streak at day-1 so it can't jump ahead
-    const cur = Math.min(s[t.id] || (day - 1), day - 1);
-    s[t.id] = checkedMap[t.id] ? cur + 1 : cur;
+    const cur = s[t.id] || 0;
+    s[t.id] = checkedMap[t.id] ? cur + 1 : 0;
   });
   localStorage.setItem(STREAK_KEY, JSON.stringify(s));
   localStorage.setItem(STREAK_DATE_KEY, today);
@@ -579,14 +577,13 @@ async function syncFromSupabase() {
       await dbPushTasks();
     }
 
-    // Streaks: normalize all values up to getDayNumber() (migrates old per-task consecutive system)
-    const day = getDayNumber();
+    // Streaks: trust Supabase values as-is (no forced override)
     if (streaksRes.data?.length) {
       streaks = {};
-      streaksRes.data.forEach(r => { streaks[r.task_id] = Math.max(r.count || 0, day); });
+      streaksRes.data.forEach(r => { streaks[r.task_id] = r.count || 0; });
       localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
     } else {
-      tasks.forEach(t => { streaks[t.id] = day; });
+      tasks.forEach(t => { streaks[t.id] = 0; });
       localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
       await dbPushStreaks();
     }
@@ -601,7 +598,16 @@ async function syncFromSupabase() {
       state = { date: todayState.date, checked: todayState.checked };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } else if (prevState) {
-      // Day changed — start fresh (streak recalc happens below)
+      // New day detected — recalc streaks from Supabase's prev day (authoritative cross-device source)
+      if (localStorage.getItem(STREAK_DATE_KEY) !== today) {
+        tasks.forEach(t => {
+          const cur = streaks[t.id] || 0;
+          streaks[t.id] = prevState.checked[t.id] ? cur + 1 : 0;
+        });
+        localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
+        localStorage.setItem(STREAK_DATE_KEY, today);
+        await dbPushStreaks();
+      }
       state = { date: today, checked: {} };
       saveState();
     } else {
@@ -638,7 +644,7 @@ function render() {
 
   tasks.forEach((t, idx) => {
     const checked = !!state.checked[t.id];
-    const dayNum  = streaks[t.id] || getDayNumber();
+    const dayNum  = streaks[t.id] != null ? streaks[t.id] : 1;
 
     const div = document.createElement('div');
     div.className = 'task' + (checked ? ' done' : '');
@@ -822,7 +828,7 @@ function exportSummary() {
 
   tasks.forEach((t, i) => {
     const checked = !!state.checked[t.id];
-    const dayNum  = streaks[t.id] || getDayNumber();
+    const dayNum  = streaks[t.id] != null ? streaks[t.id] : 1;
     const y = PAD + 88 + i * ROW;
 
     if (checked) {
