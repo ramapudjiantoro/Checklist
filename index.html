@@ -519,8 +519,8 @@ function updateStreaks(checkedMap) {
   const s = loadStreaks();
   tasks.forEach(t => {
     const cur = s[t.id] != null ? s[t.id] : getDayNumber();
-    // checked → increment; not checked → freeze (never reset to 0)
-    s[t.id] = checkedMap[t.id] ? cur + 1 : cur;
+    // checked → increment; not checked → streak broken, reset to 0
+    s[t.id] = checkedMap[t.id] ? cur + 1 : 0;
   });
   localStorage.setItem(STREAK_KEY, JSON.stringify(s));
   localStorage.setItem(STREAK_DATE_KEY, today);
@@ -635,8 +635,8 @@ async function syncFromSupabase() {
       if (!localDone && !remoteDone) {
         tasks.forEach(t => {
           const cur = streaks[t.id] != null ? streaks[t.id] : getDayNumber();
-          // checked yesterday → increment; not checked → freeze
-          streaks[t.id] = prevState.checked[t.id] ? cur + 1 : cur;
+          // checked yesterday → increment; not checked → streak broken, reset to 0
+          streaks[t.id] = prevState.checked[t.id] ? cur + 1 : 0;
         });
         localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
         localStorage.setItem(STREAK_DATE_KEY, today);
@@ -666,6 +666,44 @@ async function syncFromSupabase() {
   } catch (err) {
     console.warn('Supabase sync failed — using local data:', err);
   }
+}
+
+// ── Remote state poll: fetch today's checked map and apply if different ────────
+async function pollRemoteState() {
+  try {
+    const today = todayStr();
+    const { data } = await db.from('daily_state').select('checked').eq('date', today).maybeSingle();
+    if (!data) return;
+    const incoming = data.checked || {};
+    if (JSON.stringify(incoming) === JSON.stringify(state.checked)) return;
+    state.checked = incoming;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    render();
+  } catch (e) { /* silent — offline or network error */ }
+}
+
+// ── Supabase Realtime + polling fallback for cross-device sync ────────────────
+function subscribeToRealtime() {
+  // 1. Realtime (instant when it works — needs anon SELECT policy on daily_state)
+  db.channel('checklist-sync')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_state' }, payload => {
+      const today = todayStr();
+      if (!payload.new || payload.new.date !== today) return;
+      const incoming = payload.new.checked || {};
+      if (JSON.stringify(incoming) === JSON.stringify(state.checked)) return;
+      state.checked = incoming;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+    })
+    .subscribe();
+
+  // 2. Poll every 10 s — guaranteed fallback regardless of RLS/realtime status
+  setInterval(pollRemoteState, 10000);
+
+  // 3. Sync instantly whenever this tab becomes visible again
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) pollRemoteState();
+  });
 }
 
 // ── Init (local-first → then sync) ───────────────────────────────────────────
@@ -937,6 +975,7 @@ render();
 setInterval(updateTimer, 1000);
 updateTimer();
 syncFromSupabase();
+subscribeToRealtime();
 </script>
 
 <!-- ══════════════════════════════════════════════
