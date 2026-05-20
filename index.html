@@ -42,9 +42,7 @@
   #app-cl .task.done .task-check svg { display: block; }
   #app-cl .task-label { flex: 1; font-size: 0.95rem; }
   #app-cl .task.done .task-label { text-decoration: line-through; }
-  #app-cl .task-streak { font-size: 0.7rem; color: #444; white-space: nowrap; padding-top: 2px; letter-spacing: 0.01em; align-self: flex-start; }
-  #app-cl .task.done .task-streak { color: #c47f10; }
-  #app-cl .task-actions { display: flex; gap: 4px; max-width: 0; overflow: hidden; opacity: 0; flex-shrink: 0; transition: opacity 0.15s, max-width 0.15s; }
+#app-cl .task-actions { display: flex; gap: 4px; max-width: 0; overflow: hidden; opacity: 0; flex-shrink: 0; transition: opacity 0.15s, max-width 0.15s; }
   #app-cl .task:hover .task-actions { max-width: 64px; opacity: 1; }
   #app-cl .task-actions button { background: none; border: none; color: #555; font-size: 0.78rem; cursor: pointer; padding: 2px 5px; border-radius: 4px; white-space: nowrap; }
   #app-cl .task-actions button:hover { color: #f0f0f0; background: #2a2a2a; }
@@ -450,30 +448,13 @@ const DEFAULT_TASKS = [
   { id: 't14', label: '💻 Buka Laptop. Do Something.' },
 ];
 
-const STORAGE_KEY       = 'checklist_v2';
-const STREAK_KEY        = 'streaks_v3';
-const STREAK_DATE_KEY   = 'streaks_last_date_v3';
-const STREAK_RESET_KEY  = 'streak_reset_v4'; // one-time migration flag
-const TASKS_KEY         = 'tasks_v2';
-const GOALS_KEY         = 'goals_v2';
-
-const CHALLENGE_START_MS = new Date('2026-05-01T00:00:00').getTime();
-
-function getDayNumber() {
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const diff = Math.floor((Date.now() - CHALLENGE_START_MS) / msPerDay);
-  return Math.max(1, diff + 1);
-}
+const STORAGE_KEY = 'checklist_v2';
+const TASKS_KEY   = 'tasks_v2';
+const GOALS_KEY   = 'goals_v2';
 
 function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-// Returns YYYYMMDD integer (proper 1-indexed month) — used as cross-device rollover sentinel
-function todayNum() {
-  const d = new Date();
-  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
 }
 
 // ── Local load helpers ────────────────────────────────────────────────────────
@@ -488,17 +469,13 @@ function loadState() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     if (raw.date !== todayStr()) {
-      // Don't recalc streaks here — syncFromSupabase will use authoritative Supabase data
+      // New day — start fresh
       return { date: todayStr(), checked: {} };
     }
     return raw;
   } catch { return { date: todayStr(), checked: {} }; }
 }
 
-function loadStreaks() {
-  try { return JSON.parse(localStorage.getItem(STREAK_KEY) || '{}'); }
-  catch { return {}; }
-}
 
 function loadGoals() {
   try {
@@ -513,20 +490,6 @@ function saveTasks()  { localStorage.setItem(TASKS_KEY,   JSON.stringify(tasks))
 function saveState()  { localStorage.setItem(STORAGE_KEY, JSON.stringify(state));   dbPushState(); }
 function saveGoals()  { localStorage.setItem(GOALS_KEY,   JSON.stringify(goals));   dbPushGoals(); }
 
-function updateStreaks(checkedMap) {
-  const today = todayStr();
-  if (localStorage.getItem(STREAK_DATE_KEY) === today) return;
-  const s = loadStreaks();
-  tasks.forEach(t => {
-    const cur = s[t.id] != null ? s[t.id] : getDayNumber();
-    // checked → increment; not checked → streak broken, reset to 0
-    s[t.id] = checkedMap[t.id] ? cur + 1 : 0;
-  });
-  localStorage.setItem(STREAK_KEY, JSON.stringify(s));
-  localStorage.setItem(STREAK_DATE_KEY, today);
-  streaks = s;
-  dbPushStreaks();
-}
 
 // ── Supabase push (fire-and-forget) ──────────────────────────────────────────
 async function dbPushTasks() {
@@ -549,14 +512,6 @@ async function dbPushState() {
   } catch (e) { console.warn('dbPushState:', e); }
 }
 
-async function dbPushStreaks() {
-  try {
-    const rows = Object.entries(streaks).map(([task_id, count]) => ({ task_id, count }));
-    // Sentinel row: lets any device know rollover has already been done for today
-    rows.push({ task_id: '_date', count: todayNum() });
-    if (rows.length) await db.from('streaks').upsert(rows, { onConflict: 'task_id' });
-  } catch (e) { console.warn('dbPushStreaks:', e); }
-}
 
 async function dbPushGoals() {
   try {
@@ -572,10 +527,9 @@ async function syncFromSupabase() {
   try {
     const today = todayStr();
 
-    const [tasksRes, stateRes, streaksRes, goalsRes] = await Promise.all([
+    const [tasksRes, stateRes, goalsRes] = await Promise.all([
       db.from('tasks').select('*').order('position'),
       db.from('daily_state').select('*').order('date', { ascending: false }).limit(7),
-      db.from('streaks').select('*'),
       db.from('daily_goals').select('*').eq('date', today).maybeSingle(),
     ]);
 
@@ -587,66 +541,13 @@ async function syncFromSupabase() {
       await dbPushTasks();
     }
 
-    // Extract cross-device rollover sentinel (_date row) — tells us if ANY device
-    // has already done the rollover for today, preventing double-counting
-    const remoteStreakDateNum = streaksRes.data?.find(r => r.task_id === '_date')?.count ?? 0;
-
-    // ── One-time migration: reset all streaks to current day baseline ──────────
-    if (!localStorage.getItem(STREAK_RESET_KEY)) {
-      const day = getDayNumber();
-      tasks.forEach(t => { streaks[t.id] = day; });
-      localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
-      localStorage.setItem(STREAK_DATE_KEY, today); // block rollover in this same sync
-      localStorage.setItem(STREAK_RESET_KEY, '1');
-      await dbPushStreaks(); // also writes _date sentinel for today
-    } else if (streaksRes.data?.length) {
-      // Load streaks from Supabase; skip the _date sentinel row
-      streaks = {};
-      streaksRes.data.forEach(r => {
-        if (r.task_id === '_date') return;
-        streaks[r.task_id] = r.count != null ? r.count : getDayNumber();
-      });
-      // Any task not yet in Supabase gets current day as baseline
-      tasks.forEach(t => {
-        if (streaks[t.id] == null) streaks[t.id] = getDayNumber();
-      });
-      localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
-    } else {
-      // No Supabase data — seed with current day
-      tasks.forEach(t => { streaks[t.id] = getDayNumber(); });
-      localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
-      await dbPushStreaks();
-    }
-
-    // ── Daily state + cross-device day rollover ─────────────────────────────────
+    // ── Daily state ─────────────────────────────────────────────────────────────
     const states     = stateRes.data || [];
     const todayState = states.find(s => s.date === today);
-    // Skip empty-checked states (produced by previous rollovers) when looking for prev completions
-    const prevState  = states.find(s => s.date < today && Object.values(s.checked || {}).some(v => v));
 
     if (todayState) {
       state = { date: todayState.date, checked: todayState.checked };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } else if (prevState) {
-      // New day on this device — only recalc if NO device has done rollover yet today
-      // (remoteStreakDateNum check prevents double-counting across devices)
-      const localDone  = localStorage.getItem(STREAK_DATE_KEY) === today;
-      const remoteDone = remoteStreakDateNum === todayNum();
-      if (!localDone && !remoteDone) {
-        tasks.forEach(t => {
-          const cur = streaks[t.id] != null ? streaks[t.id] : getDayNumber();
-          // checked yesterday → increment; not checked → streak broken, reset to 0
-          streaks[t.id] = prevState.checked[t.id] ? cur + 1 : 0;
-        });
-        localStorage.setItem(STREAK_KEY, JSON.stringify(streaks));
-        localStorage.setItem(STREAK_DATE_KEY, today);
-        await dbPushStreaks(); // also writes _date sentinel
-      } else {
-        // Rollover already done — just sync the local date key so we don't re-check
-        localStorage.setItem(STREAK_DATE_KEY, today);
-      }
-      state = { date: today, checked: {} };
-      saveState();
     } else {
       await dbPushState();
     }
@@ -707,10 +608,9 @@ function subscribeToRealtime() {
 }
 
 // ── Init (local-first → then sync) ───────────────────────────────────────────
-let tasks   = loadTasks();
-let state   = loadState();
-let streaks = loadStreaks();
-let goals   = loadGoals();
+let tasks = loadTasks();
+let state = loadState();
+let goals = loadGoals();
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function render() {
@@ -719,7 +619,6 @@ function render() {
 
   tasks.forEach((t, idx) => {
     const checked = !!state.checked[t.id];
-    const dayNum  = streaks[t.id] != null ? streaks[t.id] : getDayNumber();
 
     const div = document.createElement('div');
     div.className = 'task' + (checked ? ' done' : '');
@@ -731,7 +630,6 @@ function render() {
         </svg>
       </div>
       <div class="task-label">${escHtml(t.label)}</div>
-      <div class="task-streak">Day ${dayNum} 🔥</div>
       <div class="task-actions">
         <button class="edit" data-idx="${idx}" title="Edit">✏️</button>
         <button class="del"  data-idx="${idx}" title="Delete">✕</button>
@@ -848,7 +746,6 @@ function updateTimer() {
 
   if (diff <= 1000) {
     setTimeout(() => {
-      updateStreaks(state.checked);
       state = { date: todayStr(), checked: {} };
       saveState();
       goals = { date: todayStr(), big: '', s1: '', s2: '' };
@@ -903,7 +800,6 @@ function exportSummary() {
 
   tasks.forEach((t, i) => {
     const checked = !!state.checked[t.id];
-    const dayNum  = streaks[t.id] != null ? streaks[t.id] : getDayNumber();
     const y = PAD + 88 + i * ROW;
 
     if (checked) {
@@ -923,13 +819,6 @@ function exportSummary() {
       const tw = ctx.measureText(t.label).width;
       ctx.strokeStyle = '#888'; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.moveTo(PAD+28, y+13); ctx.lineTo(PAD+28+tw, y+13); ctx.stroke();
-    }
-
-    {
-      ctx.fillStyle = checked ? '#c47f10' : '#444';
-      ctx.font = '12px Segoe UI, system-ui, sans-serif';
-      const st = `Day ${dayNum} 🔥`;
-      ctx.fillText(st, W - PAD - ctx.measureText(st).width, y + 18);
     }
   });
 
