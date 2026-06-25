@@ -78,11 +78,20 @@
   #app-cl .btn-cancel { background: #2a2a2a; color: #aaa; }
   #export-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 300; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
   #export-overlay.show { display: flex; }
-  #export-overlay img { max-width: 92vw; max-height: 72vh; border-radius: 10px; }
-  #app-cl .export-row { display: flex; gap: 10px; }
+  #export-preview { max-width: 92vw; width: 480px; max-height: 60vh; overflow-y: auto; background: #1a1a1a; border-radius: 10px; padding: 20px 24px; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 13px; color: #e0e0e0; text-align: left; border: 1px solid #2a2a2a; }
+  #export-preview h2 { font-size: 16px; color: #f0f0f0; margin: 0 0 4px; }
+  #export-preview .ep-date { color: #555; font-size: 12px; margin-bottom: 12px; }
+  #export-preview .ep-progress { color: #f5a623; margin-bottom: 12px; font-weight: 600; }
+  #export-preview .ep-task { padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+  #export-preview .ep-done { color: #555; text-decoration: line-through; }
+  #export-preview .ep-section { color: #555; font-size: 11px; letter-spacing: 1px; margin: 14px 0 6px; border-top: 1px solid #2a2a2a; padding-top: 10px; }
+  #export-preview .ep-label { color: #888; font-size: 11px; margin-bottom: 2px; }
+  #export-preview .ep-value { font-style: italic; margin-bottom: 10px; }
+  #app-cl .export-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
   #app-cl .export-row button { padding: 10px 22px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
-  #download-btn { background: #f5a623; color: #000; }
-  #close-export { background: #2a2a2a; color: #aaa; }
+  #download-md-btn { background: #f5a623; color: #000; }
+  #export-png-btn { background: #2a2a2a; color: #aaa; }
+  #close-export { background: #1a1a1a; color: #555; border: 1px solid #2a2a2a; }
 
   /* ══════════════════════════════════════════════
      FITNESS PLAN APP — CSS VARIABLES (global)
@@ -340,9 +349,10 @@
 
   <!-- Export overlay -->
   <div id="export-overlay">
-    <img id="export-img" src="" alt="Summary" />
+    <div id="export-preview"></div>
     <div class="export-row">
-      <button id="download-btn">⬇ Download</button>
+      <button id="download-md-btn">⬇ Download .md</button>
+      <button id="export-png-btn">📸 Export PNG</button>
       <button id="close-export">Close</button>
     </div>
   </div>
@@ -770,13 +780,50 @@ function updateDate() {
 document.getElementById('export-btn').onclick = exportSummary;
 
 function exportSummary() {
+  const now = new Date();
+  const done = tasks.filter(t => !!state.checked[t.id]).length;
+
+  // Build preview HTML
+  let html = `<h2>Checklist</h2><div class="ep-date">${now.toDateString()}</div>`;
+  html += `<div class="ep-progress">${done} / ${tasks.length} completed</div>`;
+  tasks.forEach(t => {
+    const checked = !!state.checked[t.id];
+    html += `<div class="ep-task"><span>${checked ? '☑' : '☐'}</span><span class="${checked ? 'ep-done' : ''}">${t.label}</span></div>`;
+  });
+  html += `<div class="ep-section">TODAY'S GOALS</div>`;
+  html += `<div class="ep-label">Big Goal (2 hrs)</div><div class="ep-value">${goals.big || '—'}</div>`;
+  html += `<div class="ep-label">Supporting Goals</div><div class="ep-value">1. ${goals.s1 || '—'}<br>2. ${goals.s2 || '—'}</div>`;
+  document.getElementById('export-preview').innerHTML = html;
+
+  // Build markdown
+  let md = `# Checklist\n**${now.toDateString()}**\n\n`;
+  md += `**Progress:** ${done} / ${tasks.length} completed\n\n---\n\n## Tasks\n\n`;
+  tasks.forEach(t => { md += `- [${!!state.checked[t.id] ? 'x' : ' '}] ${t.label}\n`; });
+  md += `\n---\n\n## Today's Goals\n\n`;
+  md += `**Big Goal (2 hrs)**\n${goals.big || '—'}\n\n`;
+  md += `**Supporting Goals**\n1. ${goals.s1 || '—'}\n2. ${goals.s2 || '—'}\n`;
+
+  document.getElementById('download-md-btn').onclick = () => {
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `checklist-${now.toISOString().slice(0,10)}.md`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  document.getElementById('export-png-btn').onclick = () => exportPNG(now);
+
+  document.getElementById('export-overlay').classList.add('show');
+}
+
+function exportPNG(now) {
   const canvas = document.createElement('canvas');
   const W = 540, ROW = 46, PAD = 28;
   const goalsH = 130;
   const H = PAD * 2 + 90 + tasks.length * ROW + goalsH + 30;
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
-  const now = new Date();
 
   ctx.fillStyle = '#0f0f0f'; ctx.fillRect(0, 0, W, H);
 
@@ -801,7 +848,6 @@ function exportSummary() {
   tasks.forEach((t, i) => {
     const checked = !!state.checked[t.id];
     const y = PAD + 88 + i * ROW;
-
     if (checked) {
       ctx.fillStyle = '#f5a623';
       ctx.beginPath(); ctx.roundRect(PAD, y+6, 18, 18, 4); ctx.fill();
@@ -811,7 +857,6 @@ function exportSummary() {
       ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.roundRect(PAD, y+6, 18, 18, 4); ctx.stroke();
     }
-
     ctx.fillStyle = '#f0f0f0';
     ctx.font = '14px Segoe UI, system-ui, sans-serif';
     ctx.fillText(t.label, PAD + 28, y + 18);
@@ -828,30 +873,23 @@ function exportSummary() {
 
   ctx.fillStyle = '#555'; ctx.font = '11px Segoe UI, system-ui, sans-serif';
   ctx.fillText("TODAY'S GOALS", PAD, gy + 18);
-
   ctx.fillStyle = '#888'; ctx.font = '12px Segoe UI, system-ui, sans-serif';
   ctx.fillText('Big Goal (2 hrs)', PAD, gy + 36);
   ctx.fillStyle = '#f0f0f0'; ctx.font = 'italic 13px Segoe UI, system-ui, sans-serif';
   ctx.fillText(goals.big || '—', PAD + 10, gy + 52);
-
   ctx.fillStyle = '#888'; ctx.font = '12px Segoe UI, system-ui, sans-serif';
   ctx.fillText('Supporting Goals', PAD, gy + 72);
   ctx.fillStyle = '#f0f0f0'; ctx.font = 'italic 13px Segoe UI, system-ui, sans-serif';
   ctx.fillText(`1. ${goals.s1 || '—'}`, PAD + 10, gy + 88);
   ctx.fillText(`2. ${goals.s2 || '—'}`, PAD + 10, gy + 104);
-
   ctx.fillStyle = '#2a2a2a'; ctx.font = '11px Segoe UI, system-ui, sans-serif';
   ctx.fillText(now.toLocaleTimeString(), W - PAD - ctx.measureText(now.toLocaleTimeString()).width, H - 10);
 
   const url = canvas.toDataURL('image/png');
-  document.getElementById('export-img').src = url;
-  document.getElementById('download-btn').onclick = () => {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `checklist-${now.toISOString().slice(0,10)}.png`;
-    a.click();
-  };
-  document.getElementById('export-overlay').classList.add('show');
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `checklist-${now.toISOString().slice(0,10)}.png`;
+  a.click();
 }
 
 document.getElementById('close-export').onclick = () => {
