@@ -784,7 +784,7 @@ function exportSummary() {
   const done = tasks.filter(t => !!state.checked[t.id]).length;
 
   // Build preview HTML
-  let html = `<h2>Checklist</h2><div class="ep-date">${now.toDateString()}</div>`;
+  let html = `<h2>Checklist</h2><div class="ep-date">${now.toDateString()} · ${now.toLocaleTimeString()}</div>`;
   html += `<div class="ep-progress">${done} / ${tasks.length} completed</div>`;
   tasks.forEach(t => {
     const checked = !!state.checked[t.id];
@@ -796,7 +796,7 @@ function exportSummary() {
   document.getElementById('export-preview').innerHTML = html;
 
   // Build markdown
-  let md = `# Checklist\n**${now.toDateString()}**\n\n`;
+  let md = `# Checklist\n**${now.toDateString()} · ${now.toLocaleTimeString()}**\n\n`;
   md += `**Progress:** ${done} / ${tasks.length} completed\n\n---\n\n## Tasks\n\n`;
   tasks.forEach(t => { md += `- [${!!state.checked[t.id] ? 'x' : ' '}] ${t.label}\n`; });
   md += `\n---\n\n## Today's Goals\n\n`;
@@ -832,7 +832,7 @@ function exportPNG(now) {
   ctx.fillText('Checklist', PAD, PAD + 22);
   ctx.fillStyle = '#555';
   ctx.font = '13px Segoe UI, system-ui, sans-serif';
-  ctx.fillText(now.toDateString(), PAD, PAD + 42);
+  ctx.fillText(`${now.toDateString()} · ${now.toLocaleTimeString()}`, PAD, PAD + 42);
 
   const done = tasks.filter(t => !!state.checked[t.id]).length;
   ctx.fillStyle = '#f0f0f0';
@@ -882,8 +882,6 @@ function exportPNG(now) {
   ctx.fillStyle = '#f0f0f0'; ctx.font = 'italic 13px Segoe UI, system-ui, sans-serif';
   ctx.fillText(`1. ${goals.s1 || '—'}`, PAD + 10, gy + 88);
   ctx.fillText(`2. ${goals.s2 || '—'}`, PAD + 10, gy + 104);
-  ctx.fillStyle = '#2a2a2a'; ctx.font = '11px Segoe UI, system-ui, sans-serif';
-  ctx.fillText(now.toLocaleTimeString(), W - PAD - ctx.measureText(now.toLocaleTimeString()).width, H - 10);
 
   const url = canvas.toDataURL('image/png');
   const a = document.createElement('a');
