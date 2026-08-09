@@ -93,6 +93,46 @@
   #close-export { background: #1a1a1a; color: #555; border: 1px solid #2a2a2a; }
 
   /* ══════════════════════════════════════════════
+     CHECKLIST APP — DESKTOP LAYOUT
+     Two columns, no scroll: checklist left, goals right.
+  ══════════════════════════════════════════════ */
+  @media (min-width: 900px) {
+    #app-cl {
+      max-width: 1080px;
+      height: 100vh;
+      overflow: hidden;
+      padding: 36px 44px;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-rows: auto auto auto auto 1fr auto auto;
+      column-gap: 56px;
+      grid-template-areas:
+        "header       header"
+        "date         goals"
+        "progressbar  goals"
+        "progresstext goals"
+        "tasks        goals"
+        "add          goals"
+        "export       export";
+    }
+    #app-cl header { grid-area: header; margin-bottom: 4px; }
+    #date-display { grid-area: date; margin-bottom: 6px; }
+    #progress-bar-wrap { grid-area: progressbar; margin-bottom: 6px; }
+    #progress-text { grid-area: progresstext; margin-bottom: 0; }
+    #task-list { grid-area: tasks; overflow-y: auto; min-height: 0; margin-top: 10px; }
+    #add-row { grid-area: add; }
+    #app-cl #goals-section {
+      grid-area: goals;
+      margin-top: 0; padding-top: 0; border-top: none;
+      border-left: 1px solid #1e1e1e; padding-left: 40px;
+      height: 100%; overflow-y: auto;
+      display: flex; flex-direction: column; justify-content: center;
+      min-height: 0;
+    }
+    #export-btn { grid-area: export; margin-top: 20px; }
+  }
+
+  /* ══════════════════════════════════════════════
      FITNESS PLAN APP — CSS VARIABLES (global)
   ══════════════════════════════════════════════ */
   :root {
