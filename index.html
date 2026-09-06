@@ -33,8 +33,10 @@
   #progress-bar-wrap { background: #222; border-radius: 6px; height: 5px; margin-bottom: 6px; }
   #progress-bar { height: 5px; background: #f5a623; border-radius: 6px; transition: width 0.4s; }
   #progress-text { display: flex; justify-content: space-between; font-size: 0.78rem; color: #555; margin-bottom: 14px; }
-  #app-cl .task { display: flex; align-items: flex-start; gap: 12px; padding: 11px 4px; border-bottom: 1px solid #1e1e1e; cursor: pointer; user-select: none; }
+  #app-cl .task { display: flex; align-items: flex-start; gap: 12px; padding: 11px 4px; border-bottom: 1px solid #1e1e1e; cursor: pointer; user-select: none; border-radius: 6px; }
   #app-cl .task:last-child { border-bottom: none; }
+  @keyframes taskFlash { 0% { background-color: rgba(245,166,35,0.55); } 100% { background-color: transparent; } }
+  #app-cl .task.flash { animation: taskFlash 0.5s ease-out; }
   #app-cl .task-check { width: 22px; height: 22px; border: 2px solid #3a3a3a; border-radius: 5px; flex-shrink: 0; align-self: center; display: flex; align-items: center; justify-content: center; transition: background 0.15s, border-color 0.15s; }
   #app-cl .task.done .task-check { background: #f5a623; border-color: #f5a623; }
   #app-cl .task-check svg { display: none; }
@@ -66,6 +68,15 @@
   #app-cl .supporting-goal textarea:focus { border-bottom-color: #555; }
   #export-btn { display: block; width: 100%; margin-top: 28px; padding: 12px; background: #1a1a1a; color: #888; font-size: 0.9rem; border: 1px solid #2a2a2a; border-radius: 10px; cursor: pointer; }
   #export-btn:hover { color: #f0f0f0; border-color: #444; }
+  #app-cl .undo-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); display: flex; align-items: center; gap: 12px; background: #1a1a1a; border: 1px solid #333; color: #f0f0f0; padding: 8px 10px 8px 16px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); z-index: 250; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; }
+  #app-cl .undo-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  #app-cl .undo-toast span { font-size: 0.85rem; white-space: nowrap; }
+  #app-cl .undo-toast button { background: #f5a623; color: #000; border: none; padding: 7px 16px; border-radius: 7px; font-weight: 700; cursor: pointer; font-size: 0.82rem; white-space: nowrap; }
+  #app-cl .undo-progress { width: 30px; height: 30px; flex-shrink: 0; }
+  #app-cl .undo-progress svg { transform: rotate(-90deg); }
+  #app-cl .undo-progress circle { fill: none; stroke-width: 3; }
+  #app-cl .undo-progress .track { stroke: #333; }
+  #app-cl .undo-progress .bar { stroke: #f5a623; stroke-linecap: round; }
   #app-cl .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
   #app-cl .modal-bg.show { display: flex; }
   #app-cl .modal { background: #1a1a1a; border-radius: 14px; padding: 22px; width: 90%; max-width: 400px; }
@@ -395,6 +406,18 @@
       <button id="close-export">Close</button>
     </div>
   </div>
+
+  <!-- Undo delete toast -->
+  <div class="undo-toast" id="undo-toast">
+    <span>Task deleted</span>
+    <button id="undo-btn">Undo</button>
+    <div class="undo-progress">
+      <svg width="30" height="30" viewBox="0 0 30 30">
+        <circle class="track" cx="15" cy="15" r="12"></circle>
+        <circle class="bar" id="undo-progress-bar" cx="15" cy="15" r="12"></circle>
+      </svg>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -661,6 +684,8 @@ let state = loadState();
 let goals = loadGoals();
 
 // ── Render ────────────────────────────────────────────────────────────────────
+let flashId = null; // id of the task to flash on the next render (set by a check/uncheck click)
+
 function render() {
   const list = document.getElementById('task-list');
   list.innerHTML = '';
@@ -684,15 +709,23 @@ function render() {
       </div>
     `;
 
+    if (t.id === flashId) {
+      div.classList.add('flash');
+      div.addEventListener('animationend', () => div.classList.remove('flash'), { once: true });
+    }
+
     div.addEventListener('click', e => {
       if (e.target.closest('.task-actions')) return;
       state.checked[t.id] = !state.checked[t.id];
       saveState();
+      flashId = t.id;
       render();
     });
 
     list.appendChild(div);
   });
+
+  flashId = null;
 
   list.querySelectorAll('.task-actions .edit').forEach(btn => {
     btn.addEventListener('click', e => { e.stopPropagation(); openEdit(+btn.dataset.idx); });
@@ -754,10 +787,52 @@ function closeEdit() {
 }
 
 function deleteTask(idx) {
-  tasks.splice(idx, 1);
+  const [removed] = tasks.splice(idx, 1);
   saveTasks();
   render();
+  showUndoToast(removed, idx);
 }
+
+// ── Undo delete ───────────────────────────────────────────────────────────────
+const UNDO_DURATION = 5000;
+const UNDO_CIRC     = 2 * Math.PI * 12;
+let undoData    = null; // { task, idx } of the most recently deleted task
+let undoTimeout = null;
+
+const undoToast = document.getElementById('undo-toast');
+const undoBtn   = document.getElementById('undo-btn');
+const undoBar   = document.getElementById('undo-progress-bar');
+undoBar.style.strokeDasharray = UNDO_CIRC;
+
+function showUndoToast(task, idx) {
+  undoData = { task, idx };
+  clearTimeout(undoTimeout);
+
+  undoBar.style.transition = 'none';
+  undoBar.style.strokeDashoffset = '0';
+  undoToast.classList.add('show');
+  void undoBar.offsetWidth; // force reflow so the transition below actually animates
+  undoBar.style.transition = `stroke-dashoffset ${UNDO_DURATION}ms linear`;
+  undoBar.style.strokeDashoffset = String(UNDO_CIRC);
+
+  undoTimeout = setTimeout(hideUndoToast, UNDO_DURATION);
+}
+
+function hideUndoToast() {
+  undoToast.classList.remove('show');
+  undoData = null;
+  clearTimeout(undoTimeout);
+  undoTimeout = null;
+}
+
+undoBtn.addEventListener('click', () => {
+  if (!undoData) return;
+  const { task, idx } = undoData;
+  tasks.splice(Math.min(idx, tasks.length), 0, task);
+  saveTasks();
+  hideUndoToast();
+  render();
+});
 
 // ── Goals ─────────────────────────────────────────────────────────────────────
 const goalBig = document.getElementById('goal-big');
