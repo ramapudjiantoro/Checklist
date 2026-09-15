@@ -28,7 +28,19 @@
   }
   #app-cl header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   #app-cl h1 { font-size: 1.4rem; font-weight: 700; }
-  #date-display { font-size: 0.82rem; color: #555; margin-bottom: 10px; }
+  #date-display { font-size: 0.82rem; color: #555; }
+  #date-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  #date-arrows { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  #date-nav .date-arrow { background: #1a1a1a; border: 1px solid #2a2a2a; color: #888; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; flex-shrink: 0; line-height: 1; }
+  #date-nav .date-arrow:hover { color: #f0f0f0; border-color: #444; }
+  #date-display-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; }
+  #date-today-btn { display: none; background: none; border: none; color: #f5a623; font-size: 0.7rem; cursor: pointer; padding: 0; text-decoration: underline; }
+  #app-cl.viewing-other-day #date-display { color: #f5a623; }
+  #app-cl.viewing-other-day #add-row,
+  #app-cl.viewing-other-day #export-btn { opacity: 0.35; pointer-events: none; }
+  #app-cl.viewing-other-day .task { cursor: default; }
+  #app-cl.viewing-other-day .task-check { opacity: 0.6; }
+  #app-cl.viewing-other-day .goal-block textarea { pointer-events: none; opacity: 0.75; }
   #timer { font-size: 1.2rem; font-weight: 600; color: #c0392b; background: #1a1a1a; padding: 4px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; }
   #progress-bar-wrap { background: #222; border-radius: 6px; height: 5px; margin-bottom: 6px; }
   #progress-bar { height: 5px; background: #f5a623; border-radius: 6px; transition: width 0.4s; }
@@ -351,7 +363,16 @@
     <div id="timer">--:--:--</div>
   </header>
 
-  <div id="date-display"></div>
+  <div id="date-nav">
+    <div id="date-display-wrap">
+      <div id="date-display"></div>
+      <button id="date-today-btn">Back to Today</button>
+    </div>
+    <div id="date-arrows">
+      <button id="date-prev" class="date-arrow" title="Previous day" aria-label="Previous day">‹</button>
+      <button id="date-next" class="date-arrow" title="Next day" aria-label="Next day">›</button>
+    </div>
+  </div>
   <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
   <div id="progress-text"></div>
 
@@ -523,9 +544,11 @@ const STORAGE_KEY = 'checklist_v2';
 const TASKS_KEY   = 'tasks_v2';
 const GOALS_KEY   = 'goals_v2';
 
-function todayStr() {
-  const d = new Date();
+function dateKey(d) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function todayStr() {
+  return dateKey(new Date());
 }
 
 // ── Local load helpers ────────────────────────────────────────────────────────
@@ -650,7 +673,7 @@ async function pollRemoteState() {
     if (JSON.stringify(incoming) === JSON.stringify(state.checked)) return;
     state.checked = incoming;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    render();
+    if (dateKey(viewDate) === todayStr()) render();
   } catch (e) { /* silent — offline or network error */ }
 }
 
@@ -665,7 +688,7 @@ function subscribeToRealtime() {
       if (JSON.stringify(incoming) === JSON.stringify(state.checked)) return;
       state.checked = incoming;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      render();
+      if (dateKey(viewDate) === todayStr()) render();
     })
     .subscribe();
 
@@ -686,12 +709,14 @@ let goals = loadGoals();
 // ── Render ────────────────────────────────────────────────────────────────────
 let flashId = null; // id of the task to flash on the next render (set by a check/uncheck click)
 
-function render() {
+// checkedMap: { [taskId]: boolean } for whichever day is being shown.
+// interactive: false while viewing a day other than today (view-only).
+function renderTaskList(checkedMap, interactive) {
   const list = document.getElementById('task-list');
   list.innerHTML = '';
 
   tasks.forEach((t, idx) => {
-    const checked = !!state.checked[t.id];
+    const checked = !!checkedMap[t.id];
 
     const div = document.createElement('div');
     div.className = 'task' + (checked ? ' done' : '');
@@ -709,36 +734,46 @@ function render() {
       </div>
     `;
 
-    if (t.id === flashId) {
-      div.classList.add('flash');
-      div.addEventListener('animationend', () => div.classList.remove('flash'), { once: true });
-    }
+    if (interactive) {
+      if (t.id === flashId) {
+        div.classList.add('flash');
+        div.addEventListener('animationend', () => div.classList.remove('flash'), { once: true });
+      }
 
-    div.addEventListener('click', e => {
-      if (e.target.closest('.task-actions')) return;
-      state.checked[t.id] = !state.checked[t.id];
-      saveState();
-      flashId = t.id;
-      render();
-    });
+      div.addEventListener('click', e => {
+        if (e.target.closest('.task-actions')) return;
+        state.checked[t.id] = !state.checked[t.id];
+        saveState();
+        flashId = t.id;
+        render();
+      });
+    } else {
+      div.querySelector('.task-actions').remove();
+    }
 
     list.appendChild(div);
   });
 
   flashId = null;
 
-  list.querySelectorAll('.task-actions .edit').forEach(btn => {
-    btn.addEventListener('click', e => { e.stopPropagation(); openEdit(+btn.dataset.idx); });
-  });
-  list.querySelectorAll('.task-actions .del').forEach(btn => {
-    btn.addEventListener('click', e => { e.stopPropagation(); deleteTask(+btn.dataset.idx); });
-  });
+  if (interactive) {
+    list.querySelectorAll('.task-actions .edit').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); openEdit(+btn.dataset.idx); });
+    });
+    list.querySelectorAll('.task-actions .del').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); deleteTask(+btn.dataset.idx); });
+    });
+  }
 
-  const done = tasks.filter(t => !!state.checked[t.id]).length;
+  const done = tasks.filter(t => !!checkedMap[t.id]).length;
   const pct  = tasks.length ? Math.round(done / tasks.length * 100) : 0;
   document.getElementById('progress-bar').style.width = pct + '%';
   document.getElementById('progress-text').innerHTML =
     `<span>${done} / ${tasks.length} done</span><span>${pct}%</span>`;
+}
+
+function render() {
+  renderTaskList(state.checked, true);
 }
 
 function escHtml(s) {
@@ -880,14 +915,77 @@ function updateTimer() {
   }
 }
 
-// ── Date display ──────────────────────────────────────────────────────────────
+// ── Date display + day navigation (arrows) ─────────────────────────────────────
+let viewDate = new Date(); // day currently shown; defaults to today
+
 function updateDate() {
-  const d   = new Date();
-  const day = d.toLocaleDateString('en-GB', { weekday: 'long' });
-  const dd  = String(d.getDate()).padStart(2, '0');
-  const mm  = d.toLocaleDateString('en-GB', { month: 'long' });
-  document.getElementById('date-display').textContent = `${day} - ${dd} ${mm} ${d.getFullYear()}`;
+  viewDate = new Date();
+  renderDateNav();
 }
+
+function renderDateNav() {
+  const day = viewDate.toLocaleDateString('en-GB', { weekday: 'long' });
+  const dd  = String(viewDate.getDate()).padStart(2, '0');
+  const mm  = viewDate.toLocaleDateString('en-GB', { month: 'long' });
+  document.getElementById('date-display').textContent = `${day} - ${dd} ${mm} ${viewDate.getFullYear()}`;
+  document.getElementById('date-today-btn').style.display =
+    dateKey(viewDate) === todayStr() ? 'none' : 'inline-block';
+}
+
+async function navigateDay(delta) {
+  const d = new Date(viewDate);
+  d.setDate(d.getDate() + delta);
+  viewDate = d;
+  renderDateNav();
+  await loadDayView();
+}
+
+async function jumpToToday() {
+  viewDate = new Date();
+  renderDateNav();
+  await loadDayView();
+}
+
+// Shows the checklist/goals for whichever day is in view. Today stays live and
+// editable (backed by localStorage + Supabase); any other day is fetched
+// straight from Supabase and rendered view-only.
+async function loadDayView() {
+  const key = dateKey(viewDate);
+  const appEl = document.getElementById('app-cl');
+
+  if (key === todayStr()) {
+    appEl.classList.remove('viewing-other-day');
+    goalBig.readOnly = goalS1.readOnly = goalS2.readOnly = false;
+    goalBig.value = goals.big; goalS1.value = goals.s1; goalS2.value = goals.s2;
+    render();
+    return;
+  }
+
+  appEl.classList.add('viewing-other-day');
+  goalBig.readOnly = goalS1.readOnly = goalS2.readOnly = true;
+
+  let checked = {};
+  let g = { big: '', s1: '', s2: '' };
+  try {
+    const [stateRes, goalsRes] = await Promise.all([
+      db.from('daily_state').select('checked').eq('date', key).maybeSingle(),
+      db.from('daily_goals').select('big,s1,s2').eq('date', key).maybeSingle(),
+    ]);
+    if (stateRes.data) checked = stateRes.data.checked || {};
+    if (goalsRes.data) g = goalsRes.data;
+  } catch (e) {
+    console.warn('loadDayView fetch failed:', e);
+  }
+
+  goalBig.value = g.big || '';
+  goalS1.value  = g.s1  || '';
+  goalS2.value  = g.s2  || '';
+  renderTaskList(checked, false);
+}
+
+document.getElementById('date-prev').onclick = () => navigateDay(-1);
+document.getElementById('date-next').onclick = () => navigateDay(1);
+document.getElementById('date-today-btn').onclick = jumpToToday;
 
 // ── Export ────────────────────────────────────────────────────────────────────
 document.getElementById('export-btn').onclick = exportSummary;
