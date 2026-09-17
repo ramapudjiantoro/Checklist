@@ -40,7 +40,7 @@
   #app-cl.viewing-other-day #export-btn { opacity: 0.35; pointer-events: none; }
   #app-cl.viewing-other-day .task { cursor: default; }
   #app-cl.viewing-other-day .task-check { opacity: 0.6; }
-  #app-cl.viewing-other-day .goal-block textarea { pointer-events: none; opacity: 0.75; }
+  #app-cl.goals-locked .goal-block textarea { pointer-events: none; opacity: 0.75; }
   #timer { font-size: 1.2rem; font-weight: 600; color: #c0392b; background: #1a1a1a; padding: 4px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; }
   #progress-bar-wrap { background: #222; border-radius: 6px; height: 5px; margin-bottom: 6px; }
   #progress-bar { height: 5px; background: #f5a623; border-radius: 6px; transition: width 0.4s; }
@@ -607,14 +607,15 @@ async function dbPushState() {
 }
 
 
-async function dbPushGoals() {
+async function dbPushGoalsFor(g) {
   try {
     await db.from('daily_goals').upsert(
-      { date: goals.date, big: goals.big, s1: goals.s1, s2: goals.s2 },
+      { date: g.date, big: g.big, s1: g.s1, s2: g.s2 },
       { onConflict: 'date' }
     );
-  } catch (e) { console.warn('dbPushGoals:', e); }
+  } catch (e) { console.warn('dbPushGoalsFor:', e); }
 }
+function dbPushGoals() { return dbPushGoalsFor(goals); }
 
 // ── Supabase initial sync (pull on open) ──────────────────────────────────────
 async function syncFromSupabase() {
@@ -878,12 +879,23 @@ goalBig.value = goals.big;
 goalS1.value  = goals.s1;
 goalS2.value  = goals.s2;
 
+// Goals for a future day being viewed (null unless the viewed day is after today —
+// past days are read-only, today writes straight into `goals` above).
+let viewGoalsState = null;
+
 [goalBig, goalS1, goalS2].forEach(el => {
   el.addEventListener('input', () => {
-    goals.big = goalBig.value;
-    goals.s1  = goalS1.value;
-    goals.s2  = goalS2.value;
-    saveGoals();
+    if (dateKey(viewDate) === todayStr()) {
+      goals.big = goalBig.value;
+      goals.s1  = goalS1.value;
+      goals.s2  = goalS2.value;
+      saveGoals();
+    } else if (viewGoalsState) {
+      viewGoalsState.big = goalBig.value;
+      viewGoalsState.s1  = goalS1.value;
+      viewGoalsState.s2  = goalS2.value;
+      dbPushGoalsFor(viewGoalsState);
+    }
   });
 });
 
@@ -946,40 +958,53 @@ async function jumpToToday() {
   await loadDayView();
 }
 
-// Shows the checklist/goals for whichever day is in view. Today stays live and
-// editable (backed by localStorage + Supabase); any other day is fetched
-// straight from Supabase and rendered view-only.
+function startOfDay(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+// Shows the checklist/goals for whichever day is in view.
+// - Today: live and editable (backed by localStorage + Supabase), as before.
+// - Future days: goals can be set ahead of time (saved straight to Supabase
+//   under that date); the task checklist itself stays view-only.
+// - Past days: fully read-only.
 async function loadDayView() {
-  const key = dateKey(viewDate);
+  const key   = dateKey(viewDate);
+  const today = todayStr();
   const appEl = document.getElementById('app-cl');
 
-  if (key === todayStr()) {
-    appEl.classList.remove('viewing-other-day');
+  if (key === today) {
+    appEl.classList.remove('viewing-other-day', 'goals-locked');
+    viewGoalsState = null;
     goalBig.readOnly = goalS1.readOnly = goalS2.readOnly = false;
     goalBig.value = goals.big; goalS1.value = goals.s1; goalS2.value = goals.s2;
     render();
     return;
   }
 
+  const isFuture = startOfDay(viewDate) > startOfDay(new Date());
   appEl.classList.add('viewing-other-day');
-  goalBig.readOnly = goalS1.readOnly = goalS2.readOnly = true;
+  appEl.classList.toggle('goals-locked', !isFuture);
+  goalBig.readOnly = goalS1.readOnly = goalS2.readOnly = !isFuture;
 
   let checked = {};
-  let g = { big: '', s1: '', s2: '' };
+  let g = { date: key, big: '', s1: '', s2: '' };
   try {
     const [stateRes, goalsRes] = await Promise.all([
       db.from('daily_state').select('checked').eq('date', key).maybeSingle(),
       db.from('daily_goals').select('big,s1,s2').eq('date', key).maybeSingle(),
     ]);
     if (stateRes.data) checked = stateRes.data.checked || {};
-    if (goalsRes.data) g = goalsRes.data;
+    if (goalsRes.data) g = { date: key, big: goalsRes.data.big || '', s1: goalsRes.data.s1 || '', s2: goalsRes.data.s2 || '' };
   } catch (e) {
     console.warn('loadDayView fetch failed:', e);
   }
 
-  goalBig.value = g.big || '';
-  goalS1.value  = g.s1  || '';
-  goalS2.value  = g.s2  || '';
+  viewGoalsState = isFuture ? g : null;
+  goalBig.value = g.big;
+  goalS1.value  = g.s1;
+  goalS2.value  = g.s2;
   renderTaskList(checked, false);
 }
 
